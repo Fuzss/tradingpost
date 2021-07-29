@@ -1,15 +1,13 @@
 package fuzs.tradingpost.block;
 
-import com.mojang.datafixers.util.Either;
+import fuzs.tradingpost.entity.merchant.MerchantCollection;
 import fuzs.tradingpost.tileentity.TradingPostTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.merchant.IMerchant;
 import net.minecraft.entity.merchant.villager.AbstractVillagerEntity;
-import net.minecraft.entity.monster.MonsterEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.container.EnchantmentContainer;
 import net.minecraft.inventory.container.INamedContainerProvider;
@@ -29,6 +27,8 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 
@@ -37,11 +37,11 @@ import java.util.List;
 
 public class TradingPostBlock extends Block implements ITileEntityProvider {
 
-    private static final VoxelShape LEG1 = Block.box(0.0, 0.0, 0.0, 4.0, 12.0, 4.0);
-    private static final VoxelShape LEG2 = Block.box(16.0, 0.0, 0.0, 12.0, 12.0, 4.0);
-    private static final VoxelShape LEG3 = Block.box(0.0, 0.0, 16.0, 4.0, 12.0, 12.0);
-    private static final VoxelShape LEG4 = Block.box(16.0, 0.0, 16.0, 12.0, 12.0, 12.0);
-    private static final VoxelShape TOP = Block.box(0.0, 12.0, 0.0, 16.0, 16.0, 16.0);
+    private static final VoxelShape LEG1 = Block.box(0.0, 0.0, 0.0, 4.0, 8.0, 4.0);
+    private static final VoxelShape LEG2 = Block.box(16.0, 0.0, 0.0, 12.0, 8.0, 4.0);
+    private static final VoxelShape LEG3 = Block.box(0.0, 0.0, 16.0, 4.0, 8.0, 12.0);
+    private static final VoxelShape LEG4 = Block.box(16.0, 0.0, 16.0, 12.0, 8.0, 12.0);
+    private static final VoxelShape TOP = Block.box(0.0, 8.0, 0.0, 16.0, 16.0, 16.0);
     private static final VoxelShape SHAPE = VoxelShapes.or(TOP, LEG1, LEG2, LEG3, LEG4);
 
     public TradingPostBlock(Properties p_i48440_1_) {
@@ -81,14 +81,19 @@ public class TradingPostBlock extends Block implements ITileEntityProvider {
             return ActionResultType.SUCCESS;
         } else {
 
-            Vector3d vector3d = Vector3d.atCenterOf(pos);
-            List<MonsterEntity> list = level.getEntitiesOfClass(AbstractVillagerEntity.class, new AxisAlignedBB(vector3d.x() - 8.0, vector3d.y() - 5.0, vector3d.z() - 8.0, vector3d.x() + 8.0, vector3d.y() + 5.0, vector3d.z() + 8.0), villager -> {
-                return villager.isAlive() && !villager.isTrading() && !villager.isSleeping();
-            });
-            if (!list.isEmpty()) {
+            Vector3d blockCenterPos = Vector3d.atCenterOf(pos);
+            List<AbstractVillagerEntity> nearbyTraders = level.getEntitiesOfClass(AbstractVillagerEntity.class, new AxisAlignedBB(blockCenterPos.x() - 8.0, blockCenterPos.y() - 5.0, blockCenterPos.z() - 8.0, blockCenterPos.x() + 8.0, blockCenterPos.y() + 5.0, blockCenterPos.z() + 8.0), villager -> villager.isAlive() && !villager.isTrading() && !villager.isSleeping() && !villager.isBaby() && !villager.getOffers().isEmpty());
+            if (!nearbyTraders.isEmpty()) {
 
+                MerchantCollection merchants = new MerchantCollection(player);
+                nearbyTraders.forEach(merchants::addMerchant);
+                merchants.setTradingPlayer(player);
+                merchants.openTradingScreen(player, new StringTextComponent("Trading Post"), 0);
+//                player.openMenu(state.getMenuProvider(level, pos));
+            } else {
+                player.displayClientMessage(new StringTextComponent("No trader found nearby"), false);
             }
-            player.openMenu(state.getMenuProvider(level, pos));
+
             return ActionResultType.CONSUME;
         }
     }

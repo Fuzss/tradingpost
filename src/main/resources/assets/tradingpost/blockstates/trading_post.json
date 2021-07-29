@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "tradingpost:block/trading_post"
+    }
+  }
+}
