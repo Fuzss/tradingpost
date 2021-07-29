@@ -1,3 +1,6 @@
 {
-  "block.tradingpost.trading_post": "Trading Post"
+  "block.tradingpost.trading_post": "Trading Post",
+  "container.trading_post": "Trading Post",
+  "trading_post.not_found": "Couldn't find any trader nearby.",
+  "trading_post.not_trading_with": "The trader is no longer available."
 }

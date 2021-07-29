@@ -1,6 +1,6 @@
 {   "parent": "block/block",
     "textures": {
-        "particle": "tradingpost:block/trading_post_front",
+        "particle": "tradingpost:block/trading_post_top",
         "bottom": "tradingpost:block/trading_post_bottom",
         "top": "tradingpost:block/trading_post_top",
         "side": "tradingpost:block/trading_post_side",

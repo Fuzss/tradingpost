@@ -1,6 +1,9 @@
 package fuzs.tradingpost.entity.merchant;
 
 import com.google.common.collect.Sets;
+import fuzs.puzzleslib.PuzzlesLib;
+import fuzs.tradingpost.network.message.SMerchantDataMessage;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.entity.merchant.IMerchant;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -17,44 +20,46 @@ import java.util.Set;
 
 public class MerchantCollection implements IMerchant {
 
-    private final PlayerEntity source;
-    private final Set<IMerchant> merchants = Sets.newHashSet();
-    private MerchantOffers offers;
-    private int xp;
+    private final PlayerEntity player;
+    private final Int2ObjectOpenHashMap<IMerchant> idToMerchant = new Int2ObjectOpenHashMap<>();
+
+    private MerchantOffers allOffers;
+    private int activeMerchantId = -1;
 
     public MerchantCollection(PlayerEntity player) {
 
-        this.source = player;
+        this.player = player;
     }
     
-    public void addMerchant(IMerchant merchant) {
+    public void addMerchant(int entityId, IMerchant merchant) {
         
-        this.merchants.add(merchant);
+        this.idToMerchant.put(entityId, merchant);
     }
 
     @Override
     @Nullable
     public PlayerEntity getTradingPlayer() {
 
-        return this.source;
+        return this.player;
     }
 
     @Override
     public void setTradingPlayer(@Nullable PlayerEntity player) {
 
-        this.merchants.forEach(merchant -> merchant.setTradingPlayer(player));
+        this.idToMerchant.values().forEach(merchant -> merchant.setTradingPlayer(player));
     }
 
     @Override
     public MerchantOffers getOffers() {
 
-        if (this.offers == null) {
+        if (this.allOffers == null) {
 
-            this.offers = new MerchantOffers();
-            this.merchants.forEach(merchant -> this.offers.addAll(merchant.getOffers()));
+            this.allOffers = new MerchantOffers();
+            // TODO create list with known order so we can retrieve merchant from offer later
+//            this.merchants.forEach(merchant -> this.allOffers.addAll(merchant.getOffers()));
         }
 
-        return this.offers;
+        return this.allOffers;
     }
 
     @Override
@@ -71,37 +76,75 @@ public class MerchantCollection implements IMerchant {
 
     @Override
     public void notifyTradeUpdated(ItemStack p_110297_1_) {
-        
+
+        // plays sound, only called on server
     }
 
     @Override
     public World getLevel() {
-        
-        return this.source.level;
+
+        // TODO replace this with worldposcallable in container
+        return this.player.level;
     }
 
     @Override
     public int getVillagerXp() {
-        
-        return this.xp;
+
+        if (this.activeMerchantId != -1) {
+
+            return this.idToMerchant.get(this.activeMerchantId).getVillagerXp();
+        }
+
+        return 0;
     }
 
     @Override
-    public void overrideXp(int newXpValue) {
+    public void overrideXp(int xpValue) {
         
-        this.xp = newXpValue;
+        if (this.activeMerchantId != -1) {
+
+            this.idToMerchant.get(this.activeMerchantId).overrideXp(xpValue);
+        }
     }
 
     @Override
     public boolean showProgressBar() {
-        
+
+        if (this.activeMerchantId != -1) {
+
+            return this.idToMerchant.get(this.activeMerchantId).showProgressBar();
+        }
+
         return true;
     }
 
     @Override
     public SoundEvent getNotifyTradeSound() {
-        
+
+        // unused by client, jsut a dummy
         return SoundEvents.VILLAGER_YES;
+    }
+
+    public void disableMerchant(int merchantId) {
+
+        // TODO
+    }
+
+    public void setActiveOffer(int offerId) {
+
+        // TODO
+    }
+
+    public void sendMerchantData(final int containerId) {
+
+        for (IMerchant merchant : this.merchants) {
+
+            if (!merchant.getOffers().isEmpty()) {
+
+                new SMerchantDataMessage()
+                PuzzlesLib.getNetworkHandler().sendTo(this.player);
+            }
+        }
     }
     
 }

@@ -38,7 +38,7 @@ public class TradingPostTileEntityRenderer extends TileEntityRenderer<TradingPos
 
     private void renderItem(ItemStack item, float time, float bookOpen, float rot, MatrixStack matrix, IRenderTypeBuffer buffer, int light, int overlay) {
         matrix.pushPose();
-        matrix.translate(0.5F, 1.05F, 0.5F);
+        matrix.translate(0.5F, 1.03125F, 0.5F);
         matrix.scale(0.8F, 0.8F, 0.8F);
 
         rot *= -180F / (float) Math.PI;

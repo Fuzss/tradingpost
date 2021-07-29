@@ -1,24 +1,24 @@
 package fuzs.tradingpost.block;
 
 import fuzs.tradingpost.entity.merchant.MerchantCollection;
+import fuzs.tradingpost.inventory.container.TradingPostContainer;
+import fuzs.tradingpost.mixin.accessor.VillagerEntityAccessor;
 import fuzs.tradingpost.tileentity.TradingPostTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.merchant.villager.AbstractVillagerEntity;
+import net.minecraft.entity.merchant.villager.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.container.EnchantmentContainer;
-import net.minecraft.inventory.container.INamedContainerProvider;
+import net.minecraft.inventory.container.MerchantContainer;
 import net.minecraft.inventory.container.SimpleNamedContainerProvider;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.MerchantOffers;
 import net.minecraft.pathfinding.PathType;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
-import net.minecraft.util.INameable;
-import net.minecraft.util.IWorldPosCallable;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -27,15 +27,15 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.OptionalInt;
 
-public class TradingPostBlock extends Block implements ITileEntityProvider {
+public class TradingPostBlock extends Block {
 
     private static final VoxelShape LEG1 = Block.box(0.0, 0.0, 0.0, 4.0, 8.0, 4.0);
     private static final VoxelShape LEG2 = Block.box(16.0, 0.0, 0.0, 12.0, 8.0, 4.0);
@@ -43,6 +43,9 @@ public class TradingPostBlock extends Block implements ITileEntityProvider {
     private static final VoxelShape LEG4 = Block.box(16.0, 0.0, 16.0, 12.0, 8.0, 12.0);
     private static final VoxelShape TOP = Block.box(0.0, 8.0, 0.0, 16.0, 16.0, 16.0);
     private static final VoxelShape SHAPE = VoxelShapes.or(TOP, LEG1, LEG2, LEG3, LEG4);
+
+    private static final ITextComponent CONTAINER_TITLE = new TranslationTextComponent("container.trading_post");
+    private static final TranslationTextComponent NO_MERCHANT_FOUND = new TranslationTextComponent("trading_post.not_found");
 
     public TradingPostBlock(Properties p_i48440_1_) {
 
@@ -68,7 +71,14 @@ public class TradingPostBlock extends Block implements ITileEntityProvider {
     }
 
     @Override
-    public TileEntity newBlockEntity(IBlockReader p_196283_1_) {
+    public boolean hasTileEntity(BlockState state) {
+
+        return true;
+    }
+
+    @Nullable
+    @Override
+    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
 
         return new TradingPostTileEntity();
     }
@@ -82,35 +92,49 @@ public class TradingPostBlock extends Block implements ITileEntityProvider {
         } else {
 
             Vector3d blockCenterPos = Vector3d.atCenterOf(pos);
-            List<AbstractVillagerEntity> nearbyTraders = level.getEntitiesOfClass(AbstractVillagerEntity.class, new AxisAlignedBB(blockCenterPos.x() - 8.0, blockCenterPos.y() - 5.0, blockCenterPos.z() - 8.0, blockCenterPos.x() + 8.0, blockCenterPos.y() + 5.0, blockCenterPos.z() + 8.0), villager -> villager.isAlive() && !villager.isTrading() && !villager.isSleeping() && !villager.isBaby() && !villager.getOffers().isEmpty());
+            List<AbstractVillagerEntity> nearbyTraders = level.getEntitiesOfClass(AbstractVillagerEntity.class, new AxisAlignedBB(blockCenterPos.add(-8.0, -5.0, -8.0), blockCenterPos.add(8.0, 5.0, 8.0)), this::canTrade);
             if (!nearbyTraders.isEmpty()) {
 
                 MerchantCollection merchants = new MerchantCollection(player);
-                nearbyTraders.forEach(merchants::addMerchant);
+                nearbyTraders.forEach(merchant -> {
+
+                    if (merchant instanceof VillagerEntity) {
+
+                        ((VillagerEntityAccessor) merchant).callUpdateSpecialPrices(player);
+                    }
+
+                    merchants.addMerchant(merchant.getId(), merchant);
+                });
+
                 merchants.setTradingPlayer(player);
-                merchants.openTradingScreen(player, new StringTextComponent("Trading Post"), 0);
-//                player.openMenu(state.getMenuProvider(level, pos));
+                this.openTradingScreen(player, CONTAINER_TITLE, -1, merchants);
             } else {
-                player.displayClientMessage(new StringTextComponent("No trader found nearby"), false);
+
+                player.displayClientMessage(NO_MERCHANT_FOUND, false);
             }
 
             return ActionResultType.CONSUME;
         }
     }
 
-    @Nullable
-    @Override
-    public INamedContainerProvider getMenuProvider(BlockState p_220052_1_, World p_220052_2_, BlockPos p_220052_3_) {
+    private boolean canTrade(AbstractVillagerEntity villager) {
 
-        TileEntity tileentity = p_220052_2_.getBlockEntity(p_220052_3_);
-        if (tileentity instanceof TradingPostTileEntity) {
+        return villager.isAlive() && !villager.isTrading() && !villager.isSleeping() && !villager.isBaby() && !villager.getOffers().isEmpty();
+    }
 
-            ITextComponent itextcomponent = ((INameable)tileentity).getDisplayName();
-            // TODO proper container
-            return new SimpleNamedContainerProvider((p_220147_2_, p_220147_3_, p_220147_4_) -> new EnchantmentContainer(p_220147_2_, p_220147_3_, IWorldPosCallable.create(p_220052_2_, p_220052_3_)), itextcomponent);
-        } else {
+    private void openTradingScreen(PlayerEntity player, ITextComponent title, int merchantLevel, MerchantCollection merchants) {
 
-            return null;
+        OptionalInt menuId = player.openMenu(new SimpleNamedContainerProvider((containerMenuId, playerInventory, playerEntity) -> new TradingPostContainer(containerMenuId, playerInventory, merchants), title));
+        if (menuId.isPresent()) {
+
+            merchants.sendMerchantData(menuId.getAsInt());
+
+
+            MerchantOffers merchantoffers = this.getOffers();
+            if (!merchantoffers.isEmpty()) {
+
+                player.sendMerchantOffers(menuId.getAsInt(), merchantoffers, merchantLevel, this.getVillagerXp(), this.showProgressBar(), this.canRestock());
+            }
         }
     }
 
