@@ -1,22 +1,27 @@
 package fuzs.tradingpost.entity.merchant;
 
-import com.google.common.collect.Sets;
 import fuzs.puzzleslib.PuzzlesLib;
+import fuzs.tradingpost.block.TradingPostBlock;
 import fuzs.tradingpost.network.message.SMerchantDataMessage;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.merchant.IMerchant;
+import net.minecraft.entity.merchant.villager.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.entity.villager.IVillagerDataHolder;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.MerchantOffer;
 import net.minecraft.item.MerchantOffers;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
-import java.util.Set;
+import java.util.Map;
 
 public class MerchantCollection implements IMerchant {
 
@@ -32,8 +37,11 @@ public class MerchantCollection implements IMerchant {
     }
     
     public void addMerchant(int entityId, IMerchant merchant) {
-        
-        this.idToMerchant.put(entityId, merchant);
+
+        if (!merchant.getOffers().isEmpty()) {
+
+            this.idToMerchant.put(entityId, merchant);
+        }
     }
 
     @Override
@@ -66,11 +74,13 @@ public class MerchantCollection implements IMerchant {
     @OnlyIn(Dist.CLIENT)
     public void overrideOffers(@Nullable MerchantOffers p_213703_1_) {
 
+        // this is vanilla, we do this differently
+        throw new UnsupportedOperationException("Set offers to merchants directly");
     }
 
     @Override
     public void notifyTrade(MerchantOffer offer) {
-        
+
         offer.increaseUses();
     }
 
@@ -121,7 +131,7 @@ public class MerchantCollection implements IMerchant {
     @Override
     public SoundEvent getNotifyTradeSound() {
 
-        // unused by client, jsut a dummy
+        // unused by client, just a dummy
         return SoundEvents.VILLAGER_YES;
     }
 
@@ -137,13 +147,14 @@ public class MerchantCollection implements IMerchant {
 
     public void sendMerchantData(final int containerId) {
 
-        for (IMerchant merchant : this.merchants) {
+        for (Map.Entry<Integer, IMerchant> entry : this.idToMerchant.int2ObjectEntrySet()) {
 
-            if (!merchant.getOffers().isEmpty()) {
+            IMerchant merchant = entry.getValue();
+            final ITextComponent merchantTitle = merchant instanceof Entity ? ((Entity) merchant).getDisplayName() : TradingPostBlock.CONTAINER_TITLE;
+            final int merchantLevel = merchant instanceof IVillagerDataHolder ? ((IVillagerDataHolder) merchant).getVillagerData().getLevel() : 0;
 
-                new SMerchantDataMessage()
-                PuzzlesLib.getNetworkHandler().sendTo(this.player);
-            }
+            SMerchantDataMessage message = new SMerchantDataMessage(containerId, entry.getKey(), merchantTitle, this.getOffers(), merchantLevel, this.getVillagerXp(), this.showProgressBar(), this.canRestock());
+            PuzzlesLib.getNetworkHandler().sendTo(message, (ServerPlayerEntity) this.player);
         }
     }
     

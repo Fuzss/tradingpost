@@ -10,11 +10,14 @@ import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3f;
 
+/**
+ * mostly copied from Quark's matrix enchanting table by Vazkii
+ * https://github.com/Vazkii/Quark/blob/master/src/main/java/vazkii/quark/addons/oddities/client/render/MatrixEnchantingTableTileEntityRenderer.java
+ */
 public class TradingPostTileEntityRenderer extends TileEntityRenderer<TradingPostTileEntity> {
-
-    private final ItemStack emeraldStack = new ItemStack(Items.EMERALD);
 
     public TradingPostTileEntityRenderer(TileEntityRendererDispatcher tileEntityRendererDispatcher) {
 
@@ -24,37 +27,42 @@ public class TradingPostTileEntityRenderer extends TileEntityRenderer<TradingPos
     @Override
     public void render(TradingPostTileEntity tileEntityIn, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int combinedLightIn, int combinedOverlayIn) {
 
-        float time = tileEntityIn.time + partialTicks;
-        float f1 = tileEntityIn.rot - tileEntityIn.oRot;
-        while (f1 >= Math.PI)
-            f1 -= (Math.PI * 2F);
-        while (f1 < -Math.PI)
-            f1 += (Math.PI * 2F);
+        float ageInTicks = tileEntityIn.time + partialTicks;
+        float nextRotation = tileEntityIn.rot - tileEntityIn.oRot;
+        while (nextRotation >= Math.PI) {
 
-        float rot = tileEntityIn.oRot + f1 * partialTicks;
-        float bookOpen = tileEntityIn.oOpen + (tileEntityIn.open - tileEntityIn.oOpen) * partialTicks;
-        renderItem(this.emeraldStack, time, bookOpen, rot, matrixStackIn, bufferIn, combinedLightIn, combinedOverlayIn);
+            nextRotation -= (Math.PI * 2F);
+        }
+        while (nextRotation < -Math.PI) {
+
+            nextRotation += (Math.PI * 2F);
+        }
+
+        float bookRotation = tileEntityIn.oRot + nextRotation * partialTicks;
+        float bookOpen = MathHelper.lerp(partialTicks, tileEntityIn.oOpen, tileEntityIn.open);
+        this.renderItem(new ItemStack(Items.EMERALD), ageInTicks, bookOpen, bookRotation, matrixStackIn, bufferIn, combinedLightIn, combinedOverlayIn);
     }
 
-    private void renderItem(ItemStack item, float time, float bookOpen, float rot, MatrixStack matrix, IRenderTypeBuffer buffer, int light, int overlay) {
-        matrix.pushPose();
-        matrix.translate(0.5F, 1.03125F, 0.5F);
-        matrix.scale(0.8F, 0.8F, 0.8F);
+    private void renderItem(ItemStack stack, float ageInTicks, float bookOpen, float bookRotation, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int combinedLightIn, int combinedOverlayIn) {
 
-        rot *= -180F / (float) Math.PI;
-        rot -= 90F;
-        rot *= bookOpen;
+        matrixStackIn.pushPose();
+        matrixStackIn.translate(0.5F, 1.03125F, 0.5F);
+        matrixStackIn.scale(0.8F, 0.8F, 0.8F);
 
-        matrix.mulPose(Vector3f.YP.rotationDegrees(rot));
-        matrix.translate(0, bookOpen, Math.sin(bookOpen * Math.PI));
-        matrix.mulPose(Vector3f.XP.rotationDegrees(-90F * (bookOpen - 1F)));
+        bookRotation *= -180.0F / (float) Math.PI;
+        bookRotation -= 90.0F;
+        bookRotation *= bookOpen;
 
-        float trans = (float) Math.sin(time * 0.06) * bookOpen * 0.2F;
-        matrix.translate(0F, trans, 0F);
+        matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(bookRotation));
+        matrixStackIn.translate(0.0F, bookOpen, Math.sin(bookOpen * Math.PI));
+        matrixStackIn.mulPose(Vector3f.XP.rotationDegrees(-90.0F * (bookOpen - 1.0F)));
 
-        ItemRenderer render = Minecraft.getInstance().getItemRenderer();
-        render.renderStatic(item, ItemCameraTransforms.TransformType.FIXED, light, overlay, matrix, buffer);
-        matrix.popPose();
+        float yFloatiness = (float) Math.sin(ageInTicks * 0.06F) * bookOpen * 0.2F;
+        matrixStackIn.translate(0.0F, yFloatiness, 0.0F);
+
+        ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
+        itemRenderer.renderStatic(stack, ItemCameraTransforms.TransformType.FIXED, combinedLightIn, combinedOverlayIn, matrixStackIn, bufferIn);
+        matrixStackIn.popPose();
     }
 
 }

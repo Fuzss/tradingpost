@@ -61,6 +61,7 @@ public class TradingPostTileEntity extends TileEntity implements INameable, ITic
 
     @Override
     public void tick() {
+
         this.oOpen = this.open;
         this.oRot = this.rot;
         PlayerEntity playerentity = this.level.getNearestPlayer((double)this.worldPosition.getX() + 0.5D, (double)this.worldPosition.getY() + 0.5D, (double)this.worldPosition.getZ() + 0.5D, 3.0D, false);
@@ -119,7 +120,7 @@ public class TradingPostTileEntity extends TileEntity implements INameable, ITic
     @Override
     public ITextComponent getName() {
 
-        return (ITextComponent)(this.name != null ? this.name : new TranslationTextComponent("container.enchant"));
+        return this.name != null ? this.name : new TranslationTextComponent("container.enchant");
     }
 
     public void setCustomName(@Nullable ITextComponent p_200229_1_) {

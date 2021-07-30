@@ -40,8 +40,7 @@ public class TradingPostElement extends ClientExtensibleElement<TradingPostExten
     @Override
     public String[] getDescription() {
 
-        // TODO proper description
-        return new String[]{"Changing the in-game models to allow for better animations and subtle effects."};
+        return new String[]{"A unique utility for the true bargain hunter looking for the best possible deal."};
     }
 
     @SuppressWarnings("ConstantConditions")

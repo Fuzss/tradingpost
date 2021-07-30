@@ -4,14 +4,15 @@ import fuzs.puzzleslib.network.message.Message;
 import fuzs.tradingpost.inventory.container.TradingPostContainer;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.MerchantContainer;
 import net.minecraft.item.MerchantOffers;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.text.ITextComponent;
 
 public class SMerchantDataMessage extends Message {
 
     private int containerId;
     private int merchantId;
+    private ITextComponent merchantTitle;
     private MerchantOffers offers;
     private int villagerLevel;
     private int villagerXp;
@@ -22,10 +23,11 @@ public class SMerchantDataMessage extends Message {
 
     }
 
-    public SMerchantDataMessage(int containerId, int merchantId, MerchantOffers offers, int villagerLevel, int villagerXp, boolean showProgress, boolean canRestock) {
+    public SMerchantDataMessage(int containerId, int merchantId, ITextComponent merchantTitle, MerchantOffers offers, int villagerLevel, int villagerXp, boolean showProgress, boolean canRestock) {
 
         this.containerId = containerId;
         this.merchantId = merchantId;
+        this.merchantTitle = merchantTitle;
         this.offers = offers;
         this.villagerLevel = villagerLevel;
         this.villagerXp = villagerXp;
@@ -38,6 +40,7 @@ public class SMerchantDataMessage extends Message {
 
         buf.writeVarInt(this.containerId);
         buf.writeVarInt(this.merchantId);
+        buf.writeComponent(this.merchantTitle);
         this.offers.writeToStream(buf);
         buf.writeVarInt(this.villagerLevel);
         buf.writeVarInt(this.villagerXp);
@@ -50,6 +53,7 @@ public class SMerchantDataMessage extends Message {
 
         this.containerId = buf.readVarInt();
         this.merchantId = buf.readVarInt();
+        this.merchantTitle = buf.readComponent();
         this.offers = MerchantOffers.createFromStream(buf);
         this.villagerLevel = buf.readVarInt();
         this.villagerXp = buf.readVarInt();
@@ -71,11 +75,7 @@ public class SMerchantDataMessage extends Message {
             Container container = playerEntity.containerMenu;
             if (SMerchantDataMessage.this.containerId == container.containerId && container instanceof TradingPostContainer) {
 
-                ((MerchantContainer)container).setOffers(new MerchantOffers(SMerchantDataMessage.this.offers.createTag()));
-                ((MerchantContainer)container).setXp(SMerchantDataMessage.this.villagerXp);
-                ((MerchantContainer)container).setMerchantLevel(SMerchantDataMessage.this.villagerLevel);
-                ((MerchantContainer)container).setShowProgressBar(SMerchantDataMessage.this.showProgress);
-                ((MerchantContainer)container).setCanRestock(SMerchantDataMessage.this.canRestock);
+                ((TradingPostContainer) container).addMerchant(playerEntity, SMerchantDataMessage.this.merchantId, SMerchantDataMessage.this.merchantTitle, new MerchantOffers(SMerchantDataMessage.this.offers.createTag()), SMerchantDataMessage.this.villagerLevel, SMerchantDataMessage.this.villagerXp, SMerchantDataMessage.this.showProgress, SMerchantDataMessage.this.canRestock);
             }
         }
 

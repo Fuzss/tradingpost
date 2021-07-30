@@ -7,7 +7,6 @@ import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@SuppressWarnings("unused")
 @Mod(TradingPost.MODID)
 public class TradingPost {
 
@@ -15,7 +14,7 @@ public class TradingPost {
     public static final String NAME = "Trading Post";
     public static final Logger LOGGER = LogManager.getLogger(NAME);
 
-    public static final AbstractElement VISUAL_WORKBENCH = PuzzlesLib.register(MODID, "visual_workbench", TradingPostElement::new);
+    public static final AbstractElement TRADING_POST = PuzzlesLib.register(MODID, "trading_post", TradingPostElement::new);
 
     public TradingPost() {
 

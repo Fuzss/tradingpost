@@ -3,46 +3,32 @@ package fuzs.tradingpost.entity.merchant;
 import net.minecraft.entity.NPCMerchant;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.MerchantOffers;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import javax.annotation.Nullable;
-
 @OnlyIn(Dist.CLIENT)
 public class LocalMerchant extends NPCMerchant {
+
+    private ITextComponent merchantTitle;
+    private final int merchantLevel;
+    private final boolean showProgressBar;
+    private final boolean canRestock;
     
-    private int merchantLevel;
-    private boolean showProgressBar;
-    private boolean canRestock;
-    
-    public LocalMerchant(PlayerEntity playerEntity) {
+    public LocalMerchant(PlayerEntity playerEntity, ITextComponent merchantTitle, MerchantOffers offers, int villagerLevel, int villagerXp, boolean showProgress, boolean canRestock) {
         
         super(playerEntity);
-    }
-
-    public void setOffers(@Nullable MerchantOffers merchantOffers) {
-
-        this.overrideOffers(merchantOffers);
-    }
-    
-    public void setXp(int xpValue) {
-        
-        this.overrideXp(xpValue);
+        this.merchantTitle = merchantTitle;
+        this.overrideOffers(offers);
+        this.merchantLevel = villagerLevel;
+        this.overrideXp(villagerXp);
+        this.showProgressBar = showProgress;
+        this.canRestock = canRestock;
     }
 
     public int getMerchantLevel() {
 
         return this.merchantLevel;
-    }
-
-    public void setMerchantLevel(int merchantLevel) {
-
-        this.merchantLevel = merchantLevel;
-    }
-
-    public void setCanRestock(boolean canRestock) {
-
-        this.canRestock = canRestock;
     }
 
     @Override
@@ -57,9 +43,9 @@ public class LocalMerchant extends NPCMerchant {
         return this.showProgressBar;
     }
 
-    public void setShowProgressBar(boolean showProgressBar) {
+    public ITextComponent getDisplayName() {
 
-        this.showProgressBar = showProgressBar;
+        return this.merchantTitle;
     }
 
 }

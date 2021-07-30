@@ -11,10 +11,8 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.merchant.villager.AbstractVillagerEntity;
 import net.minecraft.entity.merchant.villager.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.container.MerchantContainer;
 import net.minecraft.inventory.container.SimpleNamedContainerProvider;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.MerchantOffers;
 import net.minecraft.pathfinding.PathType;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
@@ -33,7 +31,6 @@ import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.OptionalInt;
 
 public class TradingPostBlock extends Block {
 
@@ -44,12 +41,12 @@ public class TradingPostBlock extends Block {
     private static final VoxelShape TOP = Block.box(0.0, 8.0, 0.0, 16.0, 16.0, 16.0);
     private static final VoxelShape SHAPE = VoxelShapes.or(TOP, LEG1, LEG2, LEG3, LEG4);
 
-    private static final ITextComponent CONTAINER_TITLE = new TranslationTextComponent("container.trading_post");
+    public static final ITextComponent CONTAINER_TITLE = new TranslationTextComponent("container.trading_post");
     private static final TranslationTextComponent NO_MERCHANT_FOUND = new TranslationTextComponent("trading_post.not_found");
 
-    public TradingPostBlock(Properties p_i48440_1_) {
+    public TradingPostBlock(Properties blockProperties) {
 
-        super(p_i48440_1_);
+        super(blockProperties);
     }
 
     @Override
@@ -107,7 +104,7 @@ public class TradingPostBlock extends Block {
                 });
 
                 merchants.setTradingPlayer(player);
-                this.openTradingScreen(player, CONTAINER_TITLE, -1, merchants);
+                this.openTradingScreen(player, merchants);
             } else {
 
                 player.displayClientMessage(NO_MERCHANT_FOUND, false);
@@ -122,20 +119,10 @@ public class TradingPostBlock extends Block {
         return villager.isAlive() && !villager.isTrading() && !villager.isSleeping() && !villager.isBaby() && !villager.getOffers().isEmpty();
     }
 
-    private void openTradingScreen(PlayerEntity player, ITextComponent title, int merchantLevel, MerchantCollection merchants) {
+    private void openTradingScreen(PlayerEntity player, MerchantCollection merchants) {
 
-        OptionalInt menuId = player.openMenu(new SimpleNamedContainerProvider((containerMenuId, playerInventory, playerEntity) -> new TradingPostContainer(containerMenuId, playerInventory, merchants), title));
-        if (menuId.isPresent()) {
-
-            merchants.sendMerchantData(menuId.getAsInt());
-
-
-            MerchantOffers merchantoffers = this.getOffers();
-            if (!merchantoffers.isEmpty()) {
-
-                player.sendMerchantOffers(menuId.getAsInt(), merchantoffers, merchantLevel, this.getVillagerXp(), this.showProgressBar(), this.canRestock());
-            }
-        }
+        player.openMenu(new SimpleNamedContainerProvider((containerMenuId, playerInventory, playerEntity) -> new TradingPostContainer(containerMenuId, playerInventory, merchants), TradingPostBlock.CONTAINER_TITLE))
+                .ifPresent(merchants::sendMerchantData);
     }
 
     @Override
