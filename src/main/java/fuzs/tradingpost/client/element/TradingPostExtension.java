@@ -2,6 +2,7 @@ package fuzs.tradingpost.client.element;
 
 import fuzs.puzzleslib.element.extension.ElementExtension;
 import fuzs.puzzleslib.element.side.IClientElement;
+import fuzs.tradingpost.client.gui.screen.inventory.TradingPostScreen;
 import fuzs.tradingpost.client.renderer.tileentity.TradingPostTileEntityRenderer;
 import fuzs.tradingpost.element.TradingPostElement;
 import net.minecraft.client.gui.ScreenManager;
@@ -17,9 +18,9 @@ public class TradingPostExtension extends ElementExtension<TradingPostElement> i
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    public void loadClient() {
+    public void setupClient2() {
 
-        ScreenManager.register(TradingPostElement.TRADING_POST_CONTAINER, MerchantScreen::new);
+        ScreenManager.register(TradingPostElement.TRADING_POST_CONTAINER, TradingPostScreen::new);
         ClientRegistry.bindTileEntityRenderer(TradingPostElement.TRADING_POST_TILE_ENTITY, TradingPostTileEntityRenderer::new);
     }
 

@@ -39,7 +39,7 @@ public class SMerchantDataMessage extends Message {
     public void write(PacketBuffer buf) {
 
         buf.writeVarInt(this.containerId);
-        buf.writeVarInt(this.merchantId);
+        buf.writeInt(this.merchantId);
         buf.writeComponent(this.merchantTitle);
         this.offers.writeToStream(buf);
         buf.writeVarInt(this.villagerLevel);
@@ -52,7 +52,7 @@ public class SMerchantDataMessage extends Message {
     public void read(PacketBuffer buf) {
 
         this.containerId = buf.readVarInt();
-        this.merchantId = buf.readVarInt();
+        this.merchantId = buf.readInt();
         this.merchantTitle = buf.readComponent();
         this.offers = MerchantOffers.createFromStream(buf);
         this.villagerLevel = buf.readVarInt();

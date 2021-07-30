@@ -14,7 +14,7 @@ public class TradingPost {
     public static final String NAME = "Trading Post";
     public static final Logger LOGGER = LogManager.getLogger(NAME);
 
-    public static final AbstractElement TRADING_POST = PuzzlesLib.register(MODID, "trading_post", TradingPostElement::new);
+    public static final AbstractElement TRADING_POST = PuzzlesLib.create(MODID).register("trading_post", TradingPostElement::new);
 
     public TradingPost() {
 

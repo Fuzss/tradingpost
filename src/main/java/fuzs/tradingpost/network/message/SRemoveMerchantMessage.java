@@ -24,15 +24,15 @@ public class SRemoveMerchantMessage extends Message {
     @Override
     public void write(PacketBuffer buf) {
 
-        buf.writeVarInt(this.containerId);
-        buf.writeVarInt(this.merchantId);
+        buf.writeInt(this.containerId);
+        buf.writeInt(this.merchantId);
     }
 
     @Override
     public void read(PacketBuffer buf) {
 
-        this.containerId = buf.readVarInt();
-        this.merchantId = buf.readVarInt();
+        this.containerId = buf.readInt();
+        this.merchantId = buf.readInt();
     }
 
     @Override

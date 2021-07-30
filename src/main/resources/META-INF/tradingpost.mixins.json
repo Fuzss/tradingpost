@@ -5,6 +5,8 @@
   "package": "fuzs.tradingpost.mixin",
   "refmap": "tradingpost.refmap.json",
   "mixins": [
+    "accessor.MerchantContainerAccessor",
+    "accessor.ScreenAccessor",
     "accessor.VillagerEntityAccessor"
   ],
   "client": [

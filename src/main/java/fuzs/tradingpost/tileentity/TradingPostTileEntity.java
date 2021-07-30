@@ -64,7 +64,7 @@ public class TradingPostTileEntity extends TileEntity implements INameable, ITic
 
         this.oOpen = this.open;
         this.oRot = this.rot;
-        PlayerEntity playerentity = this.level.getNearestPlayer((double)this.worldPosition.getX() + 0.5D, (double)this.worldPosition.getY() + 0.5D, (double)this.worldPosition.getZ() + 0.5D, 3.0D, false);
+        PlayerEntity playerentity = this.level.getNearestPlayer((double)this.worldPosition.getX() + 0.5D, (double)this.worldPosition.getY() + 0.5D, (double) this.worldPosition.getZ() + 0.5D, 3.0D, false);
         if (playerentity != null) {
             double d0 = playerentity.getX() - ((double)this.worldPosition.getX() + 0.5D);
             double d1 = playerentity.getZ() - ((double)this.worldPosition.getZ() + 0.5D);

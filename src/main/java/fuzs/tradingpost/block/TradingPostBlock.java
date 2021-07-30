@@ -1,5 +1,7 @@
 package fuzs.tradingpost.block;
 
+import fuzs.tradingpost.TradingPost;
+import fuzs.tradingpost.element.TradingPostElement;
 import fuzs.tradingpost.entity.merchant.MerchantCollection;
 import fuzs.tradingpost.inventory.container.TradingPostContainer;
 import fuzs.tradingpost.mixin.accessor.VillagerEntityAccessor;
@@ -11,6 +13,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.merchant.villager.AbstractVillagerEntity;
 import net.minecraft.entity.merchant.villager.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.inventory.container.SimpleNamedContainerProvider;
 import net.minecraft.item.ItemStack;
 import net.minecraft.pathfinding.PathType;
@@ -28,6 +31,8 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.ForgeRegistry;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -104,6 +109,7 @@ public class TradingPostBlock extends Block {
                 });
 
                 merchants.setTradingPlayer(player);
+                merchants.buildOffers(merchants.getIdToOfferCountMap());
                 this.openTradingScreen(player, merchants);
             } else {
 
