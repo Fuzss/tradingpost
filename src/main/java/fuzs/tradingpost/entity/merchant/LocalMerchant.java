@@ -10,7 +10,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 @OnlyIn(Dist.CLIENT)
 public class LocalMerchant extends NPCMerchant {
 
-    private ITextComponent merchantTitle;
+    private final ITextComponent merchantTitle;
     private final int merchantLevel;
     private final boolean showProgressBar;
     private final boolean canRestock;
@@ -24,6 +24,11 @@ public class LocalMerchant extends NPCMerchant {
         this.overrideXp(villagerXp);
         this.showProgressBar = showProgress;
         this.canRestock = canRestock;
+    }
+
+    public ITextComponent getDisplayName() {
+
+        return this.merchantTitle;
     }
 
     public int getMerchantLevel() {
@@ -41,11 +46,6 @@ public class LocalMerchant extends NPCMerchant {
     public boolean showProgressBar() {
 
         return this.showProgressBar;
-    }
-
-    public ITextComponent getDisplayName() {
-
-        return this.merchantTitle;
     }
 
 }

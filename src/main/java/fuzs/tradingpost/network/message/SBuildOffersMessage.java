@@ -63,7 +63,7 @@ public class SBuildOffersMessage extends Message {
             Container container = playerEntity.containerMenu;
             if (SBuildOffersMessage.this.containerId == container.containerId && container instanceof TradingPostContainer) {
 
-                ((TradingPostContainer) container).setOffers(SBuildOffersMessage.this.idToOfferCount);
+                ((TradingPostContainer) container).getTraders().buildOffers(SBuildOffersMessage.this.idToOfferCount);
             }
         }
 

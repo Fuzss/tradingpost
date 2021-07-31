@@ -6,10 +6,11 @@
   "refmap": "tradingpost.refmap.json",
   "mixins": [
     "accessor.MerchantContainerAccessor",
-    "accessor.ScreenAccessor",
     "accessor.VillagerEntityAccessor"
   ],
   "client": [
+    "client.accessor.MerchantScreenAccessor",
+    "client.accessor.ScreenAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

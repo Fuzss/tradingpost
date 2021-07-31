@@ -5,7 +5,6 @@ import fuzs.tradingpost.entity.merchant.LocalMerchant;
 import fuzs.tradingpost.entity.merchant.MerchantCollection;
 import fuzs.tradingpost.inventory.TradingPostInventory;
 import fuzs.tradingpost.mixin.accessor.MerchantContainerAccessor;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.merchant.IMerchant;
 import net.minecraft.entity.player.PlayerEntity;
@@ -16,33 +15,42 @@ import net.minecraft.inventory.container.MerchantResultSlot;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.MerchantOffers;
+import net.minecraft.util.IWorldPosCallable;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+import java.util.Optional;
+
 public class TradingPostContainer extends MerchantContainer {
 
     private final MerchantCollection traders;
+    private final IWorldPosCallable access;
+
+    private int ticks;
 
     public TradingPostContainer(int containerId, PlayerInventory playerInventory) {
 
         super(containerId, playerInventory);
-        this.traders = new MerchantCollection(playerInventory.player.level);
+        this.traders = new MerchantCollection(playerInventory.player);
         ((MerchantContainerAccessor) this).setTrader(this.traders);
         this.updateTradingSlots(playerInventory, this.traders);
+        this.access = IWorldPosCallable.NULL;
     }
 
-    public TradingPostContainer(int containerId, PlayerInventory playerInventory, MerchantCollection merchantCollection) {
+    public TradingPostContainer(int containerId, PlayerInventory playerInventory, MerchantCollection merchantCollection, IWorldPosCallable worldPosCallable) {
 
         super(containerId, playerInventory, merchantCollection);
         this.traders = merchantCollection;
         ((MerchantContainerAccessor) this).setTrader(this.traders);
         this.updateTradingSlots(playerInventory, this.traders);
+        this.access = worldPosCallable;
     }
 
     private void updateTradingSlots(PlayerInventory playerInventory, MerchantCollection merchantCollection) {
 
+        // TODO not like this, redo all slots
         TradingPostInventory tradeContainer = new TradingPostInventory(merchantCollection);
         ((MerchantContainerAccessor) this).setTradeContainer(tradeContainer);
         Slot input1 = new Slot(tradeContainer, 0, 136, 37);
@@ -70,10 +78,20 @@ public class TradingPostContainer extends MerchantContainer {
     }
 
     @Override
-    public boolean stillValid(PlayerEntity p_75145_1_) {
+    public boolean stillValid(PlayerEntity player) {
 
-        // TODO replace with tile entity range check
-        return true;
+        // don't want this to go off on every tick
+        if (++this.ticks == 20) {
+
+            this.ticks = 0;
+            Optional<Boolean> anyTrader = this.access.evaluate((level, pos) -> this.traders.checkAvailableMerchants(this.containerId, pos));
+            if (anyTrader.isPresent() && !anyTrader.get()) {
+
+                return false;
+            }
+        }
+
+        return stillValid(this.access, player, TradingPostElement.TRADING_POST_BLOCK);
     }
 
     @Override
@@ -132,45 +150,10 @@ public class TradingPostContainer extends MerchantContainer {
         }
     }
 
-    public ITextComponent getContainerTitle() {
-
-        return this.traders.getDisplayName();
-    }
-
-    @Override
-    public int getTraderLevel() {
-
-        return this.traders.getTraderLevel();
-    }
-
     @OnlyIn(Dist.CLIENT)
-    public void setShowProgressBar(boolean showProgressBar) {
+    public MerchantCollection getTraders() {
 
-        throw new UnsupportedOperationException("Set showProgressBar to merchants directly");
-    }
-
-    @OnlyIn(Dist.CLIENT)
-    public void setXp(int xpValue) {
-
-        throw new UnsupportedOperationException("Set xp to merchants directly");
-    }
-
-    @OnlyIn(Dist.CLIENT)
-    public void setMerchantLevel(int merchantLevel) {
-
-        throw new UnsupportedOperationException("Set level to merchants directly");
-    }
-
-    @OnlyIn(Dist.CLIENT)
-    public void setCanRestock(boolean canRestock) {
-
-        throw new UnsupportedOperationException("Set canRestock to merchants directly");
-    }
-
-    @OnlyIn(Dist.CLIENT)
-    public void setOffers(MerchantOffers offers) {
-
-        throw new UnsupportedOperationException("Set offers to merchants directly");
+        return this.traders;
     }
 
     public void addMerchant(PlayerEntity playerEntity, int merchantId, ITextComponent merchantTitle, MerchantOffers offers, int villagerLevel, int villagerXp, boolean showProgress, boolean canRestock) {
@@ -179,14 +162,10 @@ public class TradingPostContainer extends MerchantContainer {
         this.traders.addMerchant(merchantId, merchant);
     }
 
-    public void removeMerchant(int merchantId) {
+    @Override
+    public int getTraderLevel() {
 
-        this.traders.disableMerchant(merchantId);
-    }
-
-    public void setOffers(Int2IntOpenHashMap idToOfferCount) {
-
-        this.traders.buildOffers(idToOfferCount);
+        return this.traders.getTraderLevel();
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -201,6 +180,41 @@ public class TradingPostContainer extends MerchantContainer {
     public boolean showProgressBar() {
 
         return this.traders.showProgressBar();
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void setShowProgressBar(boolean showProgressBar) {
+
+        throw new UnsupportedOperationException("Set showProgressBar to merchants directly");
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void setXp(int xpValue) {
+
+        throw new UnsupportedOperationException("Set xp to merchants directly");
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void setMerchantLevel(int merchantLevel) {
+
+        throw new UnsupportedOperationException("Set level to merchants directly");
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void setCanRestock(boolean canRestock) {
+
+        throw new UnsupportedOperationException("Set canRestock to merchants directly");
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void setOffers(MerchantOffers offers) {
+
+        throw new UnsupportedOperationException("Set offers to merchants directly");
     }
 
 }

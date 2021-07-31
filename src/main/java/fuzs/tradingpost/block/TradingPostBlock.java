@@ -1,5 +1,7 @@
 package fuzs.tradingpost.block;
 
+import fuzs.tradingpost.TradingPost;
+import fuzs.tradingpost.element.TradingPostElement;
 import fuzs.tradingpost.entity.merchant.MerchantCollection;
 import fuzs.tradingpost.inventory.container.TradingPostContainer;
 import fuzs.tradingpost.mixin.accessor.VillagerEntityAccessor;
@@ -22,10 +24,9 @@ import net.minecraft.pathfinding.PathType;
 import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.StateContainer;
 import net.minecraft.state.properties.BlockStateProperties;
+import net.minecraft.tileentity.EnchantingTableTileEntity;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Hand;
+import net.minecraft.util.*;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -46,7 +47,8 @@ import java.util.List;
 public class TradingPostBlock extends Block implements IWaterLoggable {
 
     public static final ITextComponent CONTAINER_TITLE = new TranslationTextComponent("container.trading_post");
-    private static final TranslationTextComponent NO_MERCHANT_FOUND = new TranslationTextComponent("trading_post.not_found");
+    private static final ITextComponent NO_MERCHANT_FOUND = new TranslationTextComponent("trading_post.no_trader_found");
+
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
     private static final VoxelShape LEG1 = Block.box(0.0, 0.0, 0.0, 4.0, 8.0, 4.0);
     private static final VoxelShape LEG2 = Block.box(16.0, 0.0, 0.0, 12.0, 8.0, 4.0);
@@ -125,10 +127,11 @@ public class TradingPostBlock extends Block implements IWaterLoggable {
         } else {
 
             Vector3d blockCenterPos = Vector3d.atCenterOf(pos);
-            List<Entity> nearbyTraders = level.getEntitiesOfClass(Entity.class, new AxisAlignedBB(blockCenterPos.add(-8.0, -5.0, -8.0), blockCenterPos.add(8.0, 5.0, 8.0)), this::canTrade);
+            TradingPostElement element = (TradingPostElement) TradingPost.TRADING_POST;
+            List<Entity> nearbyTraders = level.getEntitiesOfClass(Entity.class, new AxisAlignedBB(blockCenterPos.add(-element.horizontalRange, -element.verticalRange, -element.horizontalRange), blockCenterPos.add(element.horizontalRange, element.verticalRange, element.horizontalRange)), this::canTrade);
             if (!nearbyTraders.isEmpty()) {
 
-                MerchantCollection merchants = new MerchantCollection(level);
+                MerchantCollection merchants = new MerchantCollection(player);
                 nearbyTraders.forEach(merchant -> {
 
                     if (merchant instanceof VillagerEntity) {
@@ -141,7 +144,8 @@ public class TradingPostBlock extends Block implements IWaterLoggable {
 
                 merchants.setTradingPlayer(player);
                 merchants.buildOffers(merchants.getIdToOfferCountMap());
-                this.openTradingScreen(player, merchants);
+                ITextComponent title = this.getContainerTitle(level, pos);
+                this.openTradingScreen(player, merchants, title, IWorldPosCallable.create(level, pos));
             } else {
 
                 player.displayClientMessage(NO_MERCHANT_FOUND, false);
@@ -161,10 +165,16 @@ public class TradingPostBlock extends Block implements IWaterLoggable {
         return !(entity instanceof LivingEntity) || (!((LivingEntity) entity).isSleeping() && !((LivingEntity) entity).isBaby());
     }
 
-    private void openTradingScreen(PlayerEntity player, MerchantCollection merchants) {
+    private ITextComponent getContainerTitle(World level, BlockPos pos) {
 
-        player.openMenu(new SimpleNamedContainerProvider((containerMenuId, playerInventory, playerEntity) -> new TradingPostContainer(containerMenuId, playerInventory, merchants), TradingPostBlock.CONTAINER_TITLE))
-                .ifPresent(containerId -> merchants.sendMerchantData(containerId, player));
+        TileEntity tileentity = level.getBlockEntity(pos);
+        return tileentity instanceof EnchantingTableTileEntity ? ((INameable) tileentity).getDisplayName() : TradingPostBlock.CONTAINER_TITLE;
+    }
+
+    private void openTradingScreen(PlayerEntity player, MerchantCollection merchants, ITextComponent title, IWorldPosCallable worldPosCallable) {
+
+        player.openMenu(new SimpleNamedContainerProvider((containerMenuId, playerInventory, playerEntity) -> new TradingPostContainer(containerMenuId, playerInventory, merchants, worldPosCallable), title))
+                .ifPresent(merchants::sendMerchantData);
     }
 
     @Override

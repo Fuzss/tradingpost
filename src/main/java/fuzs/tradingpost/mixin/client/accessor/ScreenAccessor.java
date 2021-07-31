@@ -1,4 +1,4 @@
-package fuzs.tradingpost.mixin.accessor;
+package fuzs.tradingpost.mixin.client.accessor;
 
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.util.text.ITextComponent;
