@@ -3,13 +3,13 @@ package fuzs.tradingpost.inventory.container;
 import fuzs.tradingpost.element.TradingPostElement;
 import fuzs.tradingpost.entity.merchant.LocalMerchant;
 import fuzs.tradingpost.entity.merchant.MerchantCollection;
+import fuzs.tradingpost.inventory.TradingPostInventory;
 import fuzs.tradingpost.mixin.accessor.MerchantContainerAccessor;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.merchant.IMerchant;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.MerchantInventory;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.inventory.container.MerchantContainer;
 import net.minecraft.inventory.container.MerchantResultSlot;
@@ -28,7 +28,7 @@ public class TradingPostContainer extends MerchantContainer {
     public TradingPostContainer(int containerId, PlayerInventory playerInventory) {
 
         super(containerId, playerInventory);
-        this.traders = new MerchantCollection(playerInventory.player);
+        this.traders = new MerchantCollection(playerInventory.player.level);
         ((MerchantContainerAccessor) this).setTrader(this.traders);
         this.updateTradingSlots(playerInventory, this.traders);
     }
@@ -43,7 +43,7 @@ public class TradingPostContainer extends MerchantContainer {
 
     private void updateTradingSlots(PlayerInventory playerInventory, MerchantCollection merchantCollection) {
 
-        MerchantInventory tradeContainer = new MerchantInventory(merchantCollection);
+        TradingPostInventory tradeContainer = new TradingPostInventory(merchantCollection);
         ((MerchantContainerAccessor) this).setTradeContainer(tradeContainer);
         Slot input1 = new Slot(tradeContainer, 0, 136, 37);
         input1.index = 0;
@@ -66,7 +66,14 @@ public class TradingPostContainer extends MerchantContainer {
     public void setSelectionHint(int offerId) {
 
         super.setSelectionHint(offerId);
-        this.traders.setActiveOffer(offerId);
+        this.traders.setActiveOffer(this.getOffers().get(offerId));
+    }
+
+    @Override
+    public boolean stillValid(PlayerEntity p_75145_1_) {
+
+        // TODO replace with tile entity range check
+        return true;
     }
 
     @Override
@@ -86,6 +93,7 @@ public class TradingPostContainer extends MerchantContainer {
                 }
 
                 slot.onQuickCraft(itemstack1, itemstack);
+                // only replace this, vanilla will throw ClassCastException due to MerchantCollection not being an entity
                 this.playTradeSound();
             } else {
 
@@ -187,25 +195,6 @@ public class TradingPostContainer extends MerchantContainer {
 
         return this.traders.canRestock();
     }
-
-//    @Override
-//    public MerchantOffers getOffers() {
-//
-//        return this.traders.getOffers();
-//    }
-//
-//    @Override
-//    public int getTraderXp() {
-//
-//        return this.traders.getVillagerXp();
-//    }
-//
-//    @Override
-//    public boolean stillValid(PlayerEntity player) {
-//
-//        // TODO player is fixed in merchant collection, do something else
-//        return this.traders.getTradingPlayer() == player;
-//    }
 
     @OnlyIn(Dist.CLIENT)
     @Override

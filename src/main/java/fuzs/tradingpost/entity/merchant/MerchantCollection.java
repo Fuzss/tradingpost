@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.merchant.IMerchant;
 import net.minecraft.entity.player.PlayerEntity;
@@ -32,18 +33,18 @@ import java.util.stream.Collectors;
 
 public class MerchantCollection implements IMerchant {
 
-    private final PlayerEntity player;
     private final Int2ObjectOpenHashMap<IMerchant> idToMerchant = new Int2ObjectOpenHashMap<>();
+    private final World level;
 
     private MerchantOffers allOffers = new MerchantOffers();
-    private int[] offerToId;
-    private int currentId = -1;
+    private Object2ObjectOpenHashMap<MerchantOffer, IMerchant> offerToMerchant;
+    private IMerchant currentMerchant;
 
-    public MerchantCollection(PlayerEntity player) {
+    public MerchantCollection(World level) {
 
-        this.player = player;
+        this.level = level;
     }
-    
+
     public void addMerchant(int entityId, IMerchant merchant) {
 
         if (!merchant.getOffers().isEmpty()) {
@@ -56,7 +57,12 @@ public class MerchantCollection implements IMerchant {
     @Nullable
     public PlayerEntity getTradingPlayer() {
 
-        return this.player;
+        if (this.currentMerchant != null) {
+
+            return this.currentMerchant.getTradingPlayer();
+        }
+
+        return null;
     }
 
     @Override
@@ -82,34 +88,33 @@ public class MerchantCollection implements IMerchant {
     @Override
     public void notifyTrade(MerchantOffer offer) {
 
-        if (this.currentId != -1) {
+        if (this.currentMerchant != null) {
 
-            this.getCurrentMerchant().notifyTrade(offer);
+            this.currentMerchant.notifyTrade(offer);
         }
     }
 
     @Override
     public void notifyTradeUpdated(ItemStack stack) {
 
-        if (this.currentId != -1) {
+        if (this.currentMerchant != null) {
 
-            this.getCurrentMerchant().notifyTradeUpdated(stack);
+            this.currentMerchant.notifyTradeUpdated(stack);
         }
     }
 
     @Override
     public World getLevel() {
 
-        // TODO replace this with worldposcallable in container
-        return this.player.level;
+        return this.level;
     }
 
     @Override
     public int getVillagerXp() {
 
-        if (this.currentId != -1) {
+        if (this.currentMerchant != null) {
 
-            return this.getCurrentMerchant().getVillagerXp();
+            return this.currentMerchant.getVillagerXp();
         }
 
         return 0;
@@ -117,15 +122,15 @@ public class MerchantCollection implements IMerchant {
 
     public IMerchant getCurrentMerchant() {
 
-        return this.idToMerchant.get(this.currentId);
+        return this.currentMerchant;
     }
 
     @Override
     public boolean canRestock() {
 
-        if (this.currentId != -1) {
+        if (this.currentMerchant != null) {
 
-            this.getCurrentMerchant().canRestock();
+            return this.currentMerchant.canRestock();
         }
 
         return false;
@@ -134,18 +139,18 @@ public class MerchantCollection implements IMerchant {
     @Override
     public void overrideXp(int xpValue) {
         
-        if (this.currentId != -1) {
+        if (this.currentMerchant != null) {
 
-            this.getCurrentMerchant().overrideXp(xpValue);
+            this.currentMerchant.overrideXp(xpValue);
         }
     }
 
     @Override
     public boolean showProgressBar() {
 
-        if (this.currentId != -1) {
+        if (this.currentMerchant != null) {
 
-            return this.getCurrentMerchant().showProgressBar();
+            return this.currentMerchant.showProgressBar();
         }
 
         return false;
@@ -154,9 +159,9 @@ public class MerchantCollection implements IMerchant {
     @Override
     public SoundEvent getNotifyTradeSound() {
 
-        if (this.currentId != -1) {
+        if (this.currentMerchant != null) {
 
-            return this.getCurrentMerchant().getNotifyTradeSound();
+            return this.currentMerchant.getNotifyTradeSound();
         }
 
         // unused by client, just a dummy
@@ -166,9 +171,9 @@ public class MerchantCollection implements IMerchant {
     @OnlyIn(Dist.CLIENT)
     public int getTraderLevel() {
 
-        if (this.currentId != -1) {
+        if (this.currentMerchant != null) {
 
-            IMerchant merchant = this.getCurrentMerchant();
+            IMerchant merchant = this.currentMerchant;
             if (merchant instanceof LocalMerchant) {
 
                 return ((LocalMerchant) merchant).getMerchantLevel();
@@ -184,9 +189,9 @@ public class MerchantCollection implements IMerchant {
     @OnlyIn(Dist.CLIENT)
     public ITextComponent getDisplayName() {
 
-        if (this.currentId != -1) {
+        if (this.currentMerchant != null) {
 
-            IMerchant merchant = this.getCurrentMerchant();
+            IMerchant merchant = this.currentMerchant;
             if (merchant instanceof LocalMerchant) {
 
                 return ((LocalMerchant) merchant).getDisplayName();
@@ -204,15 +209,15 @@ public class MerchantCollection implements IMerchant {
         // TODO
     }
 
-    public void setActiveOffer(int offerId) {
+    public void setActiveOffer(MerchantOffer offer) {
 
-        if (this.offerToId != null) {
+        if (this.offerToMerchant != null) {
 
-            this.currentId = this.offerToId[offerId];
+            this.currentMerchant = offer != null ? this.offerToMerchant.get(offer) : null;
         }
     }
 
-    public void sendMerchantData(final int containerId) {
+    public void sendMerchantData(final int containerId, PlayerEntity player) {
 
         for (Map.Entry<Integer, IMerchant> entry : this.idToMerchant.int2ObjectEntrySet()) {
 
@@ -221,10 +226,10 @@ public class MerchantCollection implements IMerchant {
             final int merchantLevel = merchant instanceof IVillagerDataHolder ? ((IVillagerDataHolder) merchant).getVillagerData().getLevel() : 0;
 
             SMerchantDataMessage message = new SMerchantDataMessage(containerId, entry.getKey(), merchantTitle, merchant.getOffers(), merchantLevel, merchant.getVillagerXp(), merchant.showProgressBar(), merchant.canRestock());
-            PuzzlesLib.getNetworkHandler().sendTo(message, (ServerPlayerEntity) this.player);
+            PuzzlesLib.getNetworkHandler().sendTo(message, (ServerPlayerEntity) player);
         }
 
-        PuzzlesLib.getNetworkHandler().sendTo(new SBuildOffersMessage(containerId, this.getIdToOfferCountMap()), (ServerPlayerEntity) this.player);
+        PuzzlesLib.getNetworkHandler().sendTo(new SBuildOffersMessage(containerId, this.getIdToOfferCountMap()), (ServerPlayerEntity) player);
     }
 
     public Int2IntOpenHashMap getIdToOfferCountMap() {
@@ -235,8 +240,6 @@ public class MerchantCollection implements IMerchant {
 
     public void buildOffers(Int2IntOpenHashMap idToOfferCount) {
 
-        int allOffersCount = idToOfferCount.values().stream().mapToInt(Integer::intValue).sum();
-        int[] offerToId = new int[allOffersCount];
         List<Int2IntMap.Entry> sortedEntries = Lists.newArrayList(idToOfferCount.int2IntEntrySet());
         sortedEntries.sort(Comparator.comparingInt(Int2IntMap.Entry::getIntKey));
         MerchantOffers allOffers = new MerchantOffers();
@@ -245,19 +248,29 @@ public class MerchantCollection implements IMerchant {
             IMerchant merchant = this.idToMerchant.get(entry.getIntKey());
             for (int i = 0; i < entry.getIntValue(); i++) {
 
-                offerToId[allOffers.size()] = entry.getIntKey();
                 MerchantOffer offer = merchant != null && i < merchant.getOffers().size() ? merchant.getOffers().get(i) : fakeOffer();
                 allOffers.add(offer);
             }
         }
 
         this.allOffers = allOffers;
-        this.offerToId = offerToId;
+        this.buildOfferToMerchantMap();
+    }
+
+    private void buildOfferToMerchantMap() {
+
+        Object2ObjectOpenHashMap<MerchantOffer, IMerchant> offerToMerchant = new Object2ObjectOpenHashMap<>();
+        for (IMerchant merchant : this.idToMerchant.values()) {
+
+            merchant.getOffers().forEach(offer -> offerToMerchant.put(offer, merchant));
+        }
+
+        this.offerToMerchant = offerToMerchant;
     }
 
     private static MerchantOffer fakeOffer() {
 
-        return new MerchantOffer(ItemStack.EMPTY, ItemStack.EMPTY, 0, 0, 0.0F);
+        return new MerchantOffer(ItemStack.EMPTY, ItemStack.EMPTY, -1, -1, 0.0F);
     }
     
 }
