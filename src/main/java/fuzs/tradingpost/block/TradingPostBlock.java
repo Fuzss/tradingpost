@@ -47,7 +47,7 @@ import java.util.List;
 public class TradingPostBlock extends Block implements IWaterLoggable {
 
     public static final ITextComponent CONTAINER_TITLE = new TranslationTextComponent("container.trading_post");
-    private static final ITextComponent NO_MERCHANT_FOUND = new TranslationTextComponent("trading_post.no_trader_found");
+    public static final ITextComponent NO_MERCHANT_FOUND = new TranslationTextComponent("trading_post.no_trader_found");
 
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
     private static final VoxelShape LEG1 = Block.box(0.0, 0.0, 0.0, 4.0, 8.0, 4.0);
@@ -131,7 +131,8 @@ public class TradingPostBlock extends Block implements IWaterLoggable {
             List<Entity> nearbyTraders = level.getEntitiesOfClass(Entity.class, new AxisAlignedBB(blockCenterPos.add(-element.horizontalRange, -element.verticalRange, -element.horizontalRange), blockCenterPos.add(element.horizontalRange, element.verticalRange, element.horizontalRange)), this::canTrade);
             if (!nearbyTraders.isEmpty()) {
 
-                MerchantCollection merchants = new MerchantCollection(player);
+                IWorldPosCallable access = IWorldPosCallable.create(level, pos);
+                MerchantCollection merchants = new MerchantCollection(access, level);
                 nearbyTraders.forEach(merchant -> {
 
                     if (merchant instanceof VillagerEntity) {
@@ -145,7 +146,7 @@ public class TradingPostBlock extends Block implements IWaterLoggable {
                 merchants.setTradingPlayer(player);
                 merchants.buildOffers(merchants.getIdToOfferCountMap());
                 ITextComponent title = this.getContainerTitle(level, pos);
-                this.openTradingScreen(player, merchants, title, IWorldPosCallable.create(level, pos));
+                this.openTradingScreen(player, merchants, title, access);
             } else {
 
                 player.displayClientMessage(NO_MERCHANT_FOUND, false);
@@ -174,7 +175,7 @@ public class TradingPostBlock extends Block implements IWaterLoggable {
     private void openTradingScreen(PlayerEntity player, MerchantCollection merchants, ITextComponent title, IWorldPosCallable worldPosCallable) {
 
         player.openMenu(new SimpleNamedContainerProvider((containerMenuId, playerInventory, playerEntity) -> new TradingPostContainer(containerMenuId, playerInventory, merchants, worldPosCallable), title))
-                .ifPresent(merchants::sendMerchantData);
+                .ifPresent(containerId -> merchants.sendMerchantData(containerId, player));
     }
 
     @Override

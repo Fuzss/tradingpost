@@ -1,5 +1,7 @@
 package fuzs.tradingpost.inventory.container;
 
+import fuzs.tradingpost.TradingPost;
+import fuzs.tradingpost.block.TradingPostBlock;
 import fuzs.tradingpost.element.TradingPostElement;
 import fuzs.tradingpost.entity.merchant.LocalMerchant;
 import fuzs.tradingpost.entity.merchant.MerchantCollection;
@@ -25,27 +27,30 @@ import java.util.Optional;
 
 public class TradingPostContainer extends MerchantContainer {
 
-    private final MerchantCollection traders;
     private final IWorldPosCallable access;
+    private final MerchantCollection traders;
 
     private int ticks;
+    private boolean lockOffers;
 
     public TradingPostContainer(int containerId, PlayerInventory playerInventory) {
 
         super(containerId, playerInventory);
-        this.traders = new MerchantCollection(playerInventory.player);
+
+        this.access = IWorldPosCallable.NULL;
+        this.traders = new MerchantCollection(this.access, playerInventory.player.level);
         ((MerchantContainerAccessor) this).setTrader(this.traders);
         this.updateTradingSlots(playerInventory, this.traders);
-        this.access = IWorldPosCallable.NULL;
     }
 
     public TradingPostContainer(int containerId, PlayerInventory playerInventory, MerchantCollection merchantCollection, IWorldPosCallable worldPosCallable) {
 
         super(containerId, playerInventory, merchantCollection);
+
+        this.access = worldPosCallable;
         this.traders = merchantCollection;
         ((MerchantContainerAccessor) this).setTrader(this.traders);
         this.updateTradingSlots(playerInventory, this.traders);
-        this.access = worldPosCallable;
     }
 
     private void updateTradingSlots(PlayerInventory playerInventory, MerchantCollection merchantCollection) {
@@ -84,9 +89,10 @@ public class TradingPostContainer extends MerchantContainer {
         if (++this.ticks == 20) {
 
             this.ticks = 0;
-            Optional<Boolean> anyTrader = this.access.evaluate((level, pos) -> this.traders.checkAvailableMerchants(this.containerId, pos));
+            Optional<Boolean> anyTrader = this.access.evaluate((level, pos) -> this.traders.checkAvailableMerchants(this.containerId, pos, player));
             if (anyTrader.isPresent() && !anyTrader.get()) {
 
+                player.displayClientMessage(TradingPostBlock.NO_MERCHANT_FOUND, false);
                 return false;
             }
         }
@@ -150,10 +156,21 @@ public class TradingPostContainer extends MerchantContainer {
         }
     }
 
+    @Override
+    public MerchantOffers getOffers() {
+
+        return this.lockOffers ? new MerchantOffers() : super.getOffers();
+    }
+
     @OnlyIn(Dist.CLIENT)
     public MerchantCollection getTraders() {
 
         return this.traders;
+    }
+
+    public void lockOffers(boolean lock) {
+
+        this.lockOffers = lock;
     }
 
     public void addMerchant(PlayerEntity playerEntity, int merchantId, ITextComponent merchantTitle, MerchantOffers offers, int villagerLevel, int villagerXp, boolean showProgress, boolean canRestock) {
@@ -186,35 +203,35 @@ public class TradingPostContainer extends MerchantContainer {
     @Override
     public void setShowProgressBar(boolean showProgressBar) {
 
-        throw new UnsupportedOperationException("Set showProgressBar to merchants directly");
+        TradingPost.LOGGER.error("Set showProgressBar to merchants directly");
     }
 
     @OnlyIn(Dist.CLIENT)
     @Override
     public void setXp(int xpValue) {
 
-        throw new UnsupportedOperationException("Set xp to merchants directly");
+        TradingPost.LOGGER.error("Set xp to merchants directly");
     }
 
     @OnlyIn(Dist.CLIENT)
     @Override
     public void setMerchantLevel(int merchantLevel) {
 
-        throw new UnsupportedOperationException("Set level to merchants directly");
+        TradingPost.LOGGER.error("Set level to merchants directly");
     }
 
     @OnlyIn(Dist.CLIENT)
     @Override
     public void setCanRestock(boolean canRestock) {
 
-        throw new UnsupportedOperationException("Set canRestock to merchants directly");
+        TradingPost.LOGGER.error("Set canRestock to merchants directly");
     }
 
     @OnlyIn(Dist.CLIENT)
     @Override
     public void setOffers(MerchantOffers offers) {
 
-        throw new UnsupportedOperationException("Set offers to merchants directly");
+        TradingPost.LOGGER.error("Set offers to merchants directly");
     }
 
 }

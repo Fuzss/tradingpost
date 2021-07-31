@@ -21,6 +21,7 @@ import net.minecraft.entity.villager.IVillagerDataHolder;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.MerchantOffer;
 import net.minecraft.item.MerchantOffers;
+import net.minecraft.util.IWorldPosCallable;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -43,15 +44,17 @@ public class MerchantCollection implements IMerchant {
 
     private final Int2ObjectOpenHashMap<IMerchant> idToMerchant = new Int2ObjectOpenHashMap<>();
     private final Set<MerchantOffer> disabledOffers = Sets.newHashSet();
-    private final PlayerEntity player;
+    private final IWorldPosCallable access;
+    private final World level;
 
     private MerchantOffers allOffers = new MerchantOffers();
     private Object2ObjectOpenHashMap<MerchantOffer, IMerchant> offerToMerchant;
     private IMerchant currentMerchant;
 
-    public MerchantCollection(PlayerEntity player) {
+    public MerchantCollection(IWorldPosCallable access, World level) {
 
-        this.player = player;
+        this.access = access;
+        this.level = level;
     }
 
     public void addMerchant(int entityId, IMerchant merchant) {
@@ -97,7 +100,7 @@ public class MerchantCollection implements IMerchant {
     public void overrideOffers(@Nullable MerchantOffers p_213703_1_) {
 
         // this is vanilla, we do this differently
-        throw new UnsupportedOperationException("Set offers to stored merchants directly");
+        TradingPost.LOGGER.error("Set offers to stored merchants directly");
     }
 
     @Override
@@ -107,16 +110,28 @@ public class MerchantCollection implements IMerchant {
 
             this.currentMerchant.notifyTrade(offer);
 
-            // reward xp is spawned at trader location, find it and teleport to player
-            // on top of trading post would be nicer, but we don't have easy access to it's position here
-            if (!this.getLevel().isClientSide && this.currentMerchant instanceof Entity) {
+            TradingPostElement element = (TradingPostElement) TradingPost.TRADING_POST;
+            if (!element.teleportXp) {
 
-                Vector3d merchantPos = ((Entity) this.currentMerchant).position().add(0.0, 0.5, 0.0);
-                final double xpWidth = 0.5, xpHeight = 0.5;
-                List<ExperienceOrbEntity> xpRewards = this.getLevel().getEntitiesOfClass(ExperienceOrbEntity.class, new AxisAlignedBB(merchantPos.add(-xpWidth, -xpHeight, -xpWidth), merchantPos.add(xpWidth, xpHeight, xpWidth)));
-                Vector3d playerPos = this.player.position().add(0.0, 0.5, 0.0);
-                xpRewards.forEach(xp -> xp.setPos(playerPos.x, playerPos.y, playerPos.z));
+                return;
             }
+
+            // reward xp is spawned at trader location, find it and move to trading post
+            this.access.execute((level, pos) -> {
+
+                if (this.currentMerchant instanceof Entity) {
+
+                    Vector3d merchantPos = ((Entity) this.currentMerchant).position().add(0.0, 0.5, 0.0);
+                    final double xpWidth = 0.5, xpHeight = 0.5;
+                    List<ExperienceOrbEntity> xpRewards = this.getLevel().getEntitiesOfClass(ExperienceOrbEntity.class, new AxisAlignedBB(merchantPos.add(-xpWidth, -xpHeight, -xpWidth), merchantPos.add(xpWidth, xpHeight, xpWidth)), Entity::isAlive);
+                    // move xp would be much nicer, unfortunately it'd only be moved on the server, so orbs need to be removed and spawned in again
+                    for (ExperienceOrbEntity xpOrb : xpRewards) {
+
+                        this.level.addFreshEntity(new ExperienceOrbEntity(xpOrb.level, pos.getX(), pos.getY() + 1.5, pos.getZ(), xpOrb.getValue()));
+                        xpOrb.remove();
+                    }
+                }
+            });
         }
     }
 
@@ -132,8 +147,8 @@ public class MerchantCollection implements IMerchant {
     @Override
     public World getLevel() {
 
-        // should really use IWorldPosCallable in container instead, but don't want to override unnecessary methods
-        return this.player.level;
+        // only here for compatibility with mods and for use in MerchantContainer::remove
+        return this.level;
     }
 
     @Override
@@ -231,7 +246,7 @@ public class MerchantCollection implements IMerchant {
         return TradingPostBlock.CONTAINER_TITLE;
     }
 
-    public boolean checkAvailableMerchants(int containerId, BlockPos pos) {
+    public boolean checkAvailableMerchants(int containerId, BlockPos pos, PlayerEntity player) {
 
         IntSet toRemove = new IntOpenHashSet();
         for (Map.Entry<Integer, IMerchant> entry : this.idToMerchant.int2ObjectEntrySet()) {
@@ -248,7 +263,7 @@ public class MerchantCollection implements IMerchant {
         if (!toRemove.isEmpty()) {
 
             toRemove.forEach((IntConsumer) this::removeMerchant);
-            PuzzlesLib.getNetworkHandler().sendTo(new SRemoveMerchantsMessage(containerId, toRemove), (ServerPlayerEntity) this.player);
+            PuzzlesLib.getNetworkHandler().sendTo(new SRemoveMerchantsMessage(containerId, toRemove), (ServerPlayerEntity) player);
         }
 
         return !this.idToMerchant.isEmpty();
@@ -271,6 +286,10 @@ public class MerchantCollection implements IMerchant {
         this.disabledOffers.addAll(merchant.getOffers());
         this.idToMerchant.remove(merchantId);
         merchant.setTradingPlayer(null);
+        if (this.currentMerchant == merchant) {
+
+            this.currentMerchant = null;
+        }
     }
 
     public void setActiveOffer(MerchantOffer offer) {
@@ -281,7 +300,7 @@ public class MerchantCollection implements IMerchant {
         }
     }
 
-    public void sendMerchantData(final int containerId) {
+    public void sendMerchantData(final int containerId, PlayerEntity player) {
 
         for (Map.Entry<Integer, IMerchant> entry : this.idToMerchant.int2ObjectEntrySet()) {
 
@@ -290,10 +309,10 @@ public class MerchantCollection implements IMerchant {
             final int merchantLevel = merchant instanceof IVillagerDataHolder ? ((IVillagerDataHolder) merchant).getVillagerData().getLevel() : 0;
 
             SMerchantDataMessage message = new SMerchantDataMessage(containerId, entry.getKey(), merchantTitle, merchant.getOffers(), merchantLevel, merchant.getVillagerXp(), merchant.showProgressBar(), merchant.canRestock());
-            PuzzlesLib.getNetworkHandler().sendTo(message, (ServerPlayerEntity) this.player);
+            PuzzlesLib.getNetworkHandler().sendTo(message, (ServerPlayerEntity) player);
         }
 
-        PuzzlesLib.getNetworkHandler().sendTo(new SBuildOffersMessage(containerId, this.getIdToOfferCountMap()), (ServerPlayerEntity) this.player);
+        PuzzlesLib.getNetworkHandler().sendTo(new SBuildOffersMessage(containerId, this.getIdToOfferCountMap()), (ServerPlayerEntity) player);
     }
 
     public Int2IntOpenHashMap getIdToOfferCountMap() {

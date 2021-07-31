@@ -35,6 +35,7 @@ public class TradingPostElement extends ClientExtensibleElement<TradingPostExten
 
     public int horizontalRange;
     public int verticalRange;
+    public boolean teleportXp;
 
     public TradingPostElement() {
 
@@ -77,6 +78,7 @@ public class TradingPostElement extends ClientExtensibleElement<TradingPostExten
 
         builder.define("Horizontal Range", 8).range(1, 64).comment("Range on xz plane trading post should search for merchants.").sync(v -> this.horizontalRange = v);
         builder.define("Vertical Range", 5).range(1, 64).comment("Range on y axis trading post should search for merchants.").sync(v -> this.verticalRange = v);
+        builder.define("Teleport Xp", true).comment("Teleport xp from trading from villagers on top of the trading post.").sync(v -> this.teleportXp = v);
     }
 
 }
