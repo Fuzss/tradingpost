@@ -110,8 +110,7 @@ public class MerchantCollection implements IMerchant {
 
             this.currentMerchant.notifyTrade(offer);
 
-            TradingPostElement element = (TradingPostElement) TradingPost.TRADING_POST;
-            if (!element.teleportXp) {
+            if (!((TradingPostElement) TradingPost.TRADING_POST).teleportXp) {
 
                 return;
             }

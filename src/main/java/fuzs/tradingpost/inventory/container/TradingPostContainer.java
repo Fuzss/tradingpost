@@ -86,11 +86,11 @@ public class TradingPostContainer extends MerchantContainer {
     public boolean stillValid(PlayerEntity player) {
 
         // don't want this to go off on every tick
-        if (++this.ticks == 20) {
+        if (++this.ticks >= 20) {
 
             this.ticks = 0;
             Optional<Boolean> anyTrader = this.access.evaluate((level, pos) -> this.traders.checkAvailableMerchants(this.containerId, pos, player));
-            if (anyTrader.isPresent() && !anyTrader.get()) {
+            if (((TradingPostElement) TradingPost.TRADING_POST).closeScreen && anyTrader.isPresent() && !anyTrader.get()) {
 
                 player.displayClientMessage(TradingPostBlock.NO_MERCHANT_FOUND, false);
                 return false;

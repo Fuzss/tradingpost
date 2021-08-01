@@ -158,6 +158,11 @@ public class TradingPostBlock extends Block implements IWaterLoggable {
 
     private boolean canTrade(Entity entity) {
 
+        if (((TradingPostElement) TradingPost.TRADING_POST).traderBlacklist.contains(entity.getType()) || entity.getType().is(TradingPostElement.BLACKLISTED_TRADERS_TAG)) {
+
+            return false;
+        }
+
         if (!entity.isAlive() || !(entity instanceof IMerchant) || ((IMerchant) entity).getTradingPlayer() != null || ((IMerchant) entity).getOffers().isEmpty()) {
 
             return false;
