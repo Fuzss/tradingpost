@@ -19,7 +19,6 @@ import net.minecraft.item.MerchantOffers;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
 
@@ -58,7 +57,7 @@ public class TradingPostScreen extends MerchantScreen {
 
         if (j != length) {
 
-            TradingPost.LOGGER.warn("Unable to find all {} tradeOfferButtons", length);
+            TradingPost.LOGGER.warn("Unable to find enough tradeOfferButtons");
         }
 
         return tradeOfferButtons;
@@ -87,6 +86,19 @@ public class TradingPostScreen extends MerchantScreen {
 
         if (!merchantoffers.isEmpty()) {
 
+            // normally rendered as part of background, but skipped as offers are empty when it's called
+            final int shopItem = ((MerchantScreenAccessor) this).getShopItem();
+            if (shopItem >= 0 && shopItem < merchantoffers.size()) {
+
+                MerchantOffer merchantoffer = merchantoffers.get(shopItem);
+                if (merchantoffer.isOutOfStock()) {
+
+                    this.minecraft.getTextureManager().bind(VILLAGER_LOCATION);
+                    RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+                    blit(matrixStack, this.leftPos + 83 + 99, this.topPos + 35, this.getBlitOffset(), 311.0F, 0.0F, 28, 21, 256, 512);
+                }
+            }
+
             final int width = (this.width - this.imageWidth) / 2;
             final int height = (this.height - this.imageHeight) / 2;
             int posX = width + 5;
@@ -101,27 +113,57 @@ public class TradingPostScreen extends MerchantScreen {
                 if (merchantoffers.size() <= 7 || (i >= scrollOff && i < 7 + scrollOff)) {
 
                     MerchantOffer merchantoffer = merchantoffers.get(i);
+                    ((MerchantScreenAccessor) this).callRenderButtonArrows(matrixStack, merchantoffer, width, posY + 1);
+                    if (!this.getMenu().getTraders().checkOffer(merchantoffer)) {
+
+                        AbstractGui.fill(matrixStack, posX, posY, posX + 88, posY + 20, 822018048);
+                    }
+
                     ItemStack itemstack = merchantoffer.getBaseCostA();
                     ItemStack itemstack1 = merchantoffer.getCostA();
                     ItemStack itemstack2 = merchantoffer.getCostB();
                     ItemStack itemstack3 = merchantoffer.getResult();
                     this.itemRenderer.blitOffset = 100.0F;
-                    this.renderAndDecorateCostA(matrixStack, itemstack1, itemstack, posX + 5, posY + 1);
+                    this.itemRenderer.renderAndDecorateFakeItem(itemstack1, posX + 5, posY + 1);
+
                     if (!itemstack2.isEmpty()) {
 
                         this.itemRenderer.renderAndDecorateFakeItem(itemstack2, posX + 35, posY + 1);
+                    }
+
+                    this.itemRenderer.renderAndDecorateFakeItem(itemstack3, posX + 68, posY + 1);
+
+                    if (!this.getMenu().getTraders().checkOffer(merchantoffer)) {
+
+                        RenderSystem.depthFunc(516);
+                        AbstractGui.fill(matrixStack, posX, posY, posX + 88, posY + 20, 822083583);
+                        RenderSystem.depthFunc(515);
+                    }
+
+                    if (itemstack.getCount() == itemstack1.getCount()) {
+
+                        this.itemRenderer.renderGuiItemDecorations(this.font, itemstack1, posX + 5, posY + 1);
+                    } else {
+
+                        this.itemRenderer.renderGuiItemDecorations(this.font, itemstack, posX + 5, posY + 1, itemstack.getCount() == 1 ? "1" : null);
+                        this.itemRenderer.renderGuiItemDecorations(this.font, itemstack1, posX + 5 + 14, posY + 1, itemstack1.getCount() == 1 ? "1" : null);
+                        this.minecraft.getTextureManager().bind(VILLAGER_LOCATION);
+                        this.setBlitOffset(this.getBlitOffset() + 300);
+                        blit(matrixStack, posX + 5 + 7, posY + 1 + 12, this.getBlitOffset(), 0.0F, 176.0F, 9, 2, 256, 512);
+                        this.setBlitOffset(this.getBlitOffset() - 300);
+                    }
+
+                    if (!itemstack2.isEmpty()) {
+
                         this.itemRenderer.renderGuiItemDecorations(this.font, itemstack2, posX + 35, posY + 1);
                     }
 
-                    ((MerchantScreenAccessor) this).callRenderButtonArrows(matrixStack, merchantoffer, width, posY + 1);
-                    this.itemRenderer.renderAndDecorateFakeItem(itemstack3, posX + 68, posY + 1);
                     this.itemRenderer.renderGuiItemDecorations(this.font, itemstack3, posX + 68, posY + 1);
                     this.itemRenderer.blitOffset = 0.0F;
                     posY += 20;
                 }
             }
 
-            final int shopItem = ((MerchantScreenAccessor) this).getShopItem();
             final MerchantOffer activeOffer = merchantoffers.get(shopItem);
             if (this.getMenu().showProgressBar()) {
 
@@ -135,7 +177,7 @@ public class TradingPostScreen extends MerchantScreen {
 
             Button[] offerButtons = this.tradeOfferButtons;
             for (int i = 0, offerButtonsLength = offerButtons.length; i < offerButtonsLength; i++) {
-                
+
                 Button button = offerButtons[i];
                 if (button.active && button.isHovered()) {
 
@@ -145,36 +187,15 @@ public class TradingPostScreen extends MerchantScreen {
                 button.visible = i < this.getMenu().getOffers().size();
             }
 
-            RenderSystem.popMatrix();
-            RenderSystem.enableDepthTest();
-        }
-
-        this.renderTooltip(matrixStack, mouseX, mouseY);
-        
-        // TODO include above
-
-        if (!merchantoffers.isEmpty()) {
-
-            int width = (this.width - this.imageWidth) / 2;
-            int height = (this.height - this.imageHeight) / 2;
-            int posX = width + 5;
-            int posY = height + 16 + 2;
-            RenderSystem.pushMatrix();
-            RenderSystem.enableRescaleNormal();
+            posY = height + 16 + 2;
             for (int i = 0, merchantoffersSize = merchantoffers.size(); i < merchantoffersSize; i++) {
 
                 if (merchantoffers.size() <= 7 || (i >= scrollOff && i < 7 + scrollOff)) {
 
-                    MerchantOffer offer = merchantoffers.get(i);
-                    if (!this.getMenu().getTraders().checkOffer(offer)) {
+                    MerchantOffer merchantoffer = merchantoffers.get(i);
+                    if (!this.getMenu().getTraders().checkOffer(merchantoffer)) {
 
-                        AbstractGui.fill(matrixStack, posX, posY, posX + 88, posY + 20, 822018048);
-                        RenderSystem.depthFunc(516);
-                        AbstractGui.fill(matrixStack, posX, posY, posX + 88, posY + 20, 822083583);
-                        RenderSystem.depthFunc(515);
-
-                        // TODO do after item rendering to avoid overlapping
-                        if (this.isHovering(posX, posY, 89, 20, mouseX + this.leftPos, mouseY + this.topPos)) {
+                        if (this.isHovering(posX, posY, 88, 19, mouseX + this.leftPos, mouseY + this.topPos)) {
 
                             this.renderTooltip(matrixStack, MERCHANT_GONE, mouseX, mouseY);
                         }
@@ -187,6 +208,8 @@ public class TradingPostScreen extends MerchantScreen {
             RenderSystem.popMatrix();
             RenderSystem.enableDepthTest();
         }
+
+        this.renderTooltip(matrixStack, mouseX, mouseY);
     }
 
     private void setButtonsActive(MerchantOffers merchantoffers) {
