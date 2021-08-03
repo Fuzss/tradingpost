@@ -64,32 +64,32 @@ public class TradingPostBlock extends Block implements IWaterLoggable {
     }
 
     @Override
-    public boolean useShapeForLightOcclusion(BlockState p_220074_1_) {
+    public boolean useShapeForLightOcclusion(BlockState state) {
 
         return true;
     }
 
     @Override
-    public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
+    public VoxelShape getShape(BlockState state, IBlockReader blockReader, BlockPos pos, ISelectionContext context) {
         
         return SHAPE;
     }
 
     @Override
-    public BlockRenderType getRenderShape(BlockState p_149645_1_) {
+    public BlockRenderType getRenderShape(BlockState state) {
 
         return BlockRenderType.MODEL;
     }
 
     @Override
-    public BlockState updateShape(BlockState p_196271_1_, Direction p_196271_2_, BlockState p_196271_3_, IWorld p_196271_4_, BlockPos p_196271_5_, BlockPos p_196271_6_) {
+    public BlockState updateShape(BlockState state, Direction direction, BlockState oldState, IWorld level, BlockPos newPos, BlockPos oldPos) {
 
-        if (p_196271_1_.getValue(WATERLOGGED)) {
+        if (state.getValue(WATERLOGGED)) {
 
-            p_196271_4_.getLiquidTicks().scheduleTick(p_196271_5_, Fluids.WATER, Fluids.WATER.getTickDelay(p_196271_4_));
+            level.getLiquidTicks().scheduleTick(newPos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
         }
 
-        return super.updateShape(p_196271_1_, p_196271_2_, p_196271_3_, p_196271_4_, p_196271_5_, p_196271_6_);
+        return super.updateShape(state, direction, oldState, level, newPos, oldPos);
     }
 
     @Override
@@ -184,14 +184,14 @@ public class TradingPostBlock extends Block implements IWaterLoggable {
     }
 
     @Override
-    public void setPlacedBy(World p_180633_1_, BlockPos p_180633_2_, BlockState p_180633_3_, LivingEntity p_180633_4_, ItemStack p_180633_5_) {
+    public void setPlacedBy(World level, BlockPos pos, BlockState state, LivingEntity entity, ItemStack stack) {
 
-        if (p_180633_5_.hasCustomHoverName()) {
+        if (stack.hasCustomHoverName()) {
 
-            TileEntity tileentity = p_180633_1_.getBlockEntity(p_180633_2_);
+            TileEntity tileentity = level.getBlockEntity(pos);
             if (tileentity instanceof TradingPostTileEntity) {
 
-                ((TradingPostTileEntity) tileentity).setCustomName(p_180633_5_.getHoverName());
+                ((TradingPostTileEntity) tileentity).setCustomName(stack.getHoverName());
             }
         }
     }
@@ -203,7 +203,7 @@ public class TradingPostBlock extends Block implements IWaterLoggable {
     }
 
     @Override
-    public boolean isPathfindable(BlockState p_196266_1_, IBlockReader p_196266_2_, BlockPos p_196266_3_, PathType p_196266_4_) {
+    public boolean isPathfindable(BlockState state, IBlockReader blockReader, BlockPos pos, PathType pathType) {
 
         return false;
     }

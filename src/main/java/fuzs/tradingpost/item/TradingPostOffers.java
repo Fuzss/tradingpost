@@ -73,26 +73,7 @@ public class TradingPostOffers extends MerchantOffers {
 
     public int getOrigShopItem(int filteredShopItem) {
 
-        return this.indexToShopItem != null && this.indexToShopItem.length > 0 ? this.indexToShopItem[filteredShopItem] : filteredShopItem;
-    }
-
-    public int getFilteredShopItem(int origShopItem) {
-
-        if (this.indexToShopItem == null) {
-
-            return origShopItem;
-        }
-
-        int[] indexToShopItem = this.indexToShopItem;
-        for (int i = 0, toShopItemLength = indexToShopItem.length; i < toShopItemLength; i++) {
-
-            if (indexToShopItem[i] == origShopItem) {
-
-                return i;
-            }
-        }
-
-        return -1;
+        return this.indexToShopItem != null && filteredShopItem < this.indexToShopItem.length ? this.indexToShopItem[filteredShopItem] : filteredShopItem;
     }
 
 }

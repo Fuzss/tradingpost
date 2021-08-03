@@ -55,31 +55,23 @@ public class TradingPostContainer extends MerchantContainer {
 
     private void updateTradingSlots(PlayerInventory playerInventory, MerchantCollection merchantCollection) {
 
-        // TODO not like this, redo all slots
         TradingPostInventory tradeContainer = new TradingPostInventory(merchantCollection);
         ((MerchantContainerAccessor) this).setTradeContainer(tradeContainer);
-        Slot input1 = new Slot(tradeContainer, 0, 136, 37);
-        input1.index = 0;
-        this.slots.set(0, input1);
-        Slot input2 = new Slot(tradeContainer, 1, 162, 37);
-        input2.index = 1;
-        this.slots.set(1, input2);
-        MerchantResultSlot output = new MerchantResultSlot(playerInventory.player, merchantCollection, tradeContainer, 2, 220, 37);
-        output.index = 2;
-        this.slots.set(2, output);
+        this.replaceSlot(0, new Slot(tradeContainer, 0, 136, 37));
+        this.replaceSlot(1, new Slot(tradeContainer, 1, 162, 37));
+        this.replaceSlot(2, new MerchantResultSlot(playerInventory.player, merchantCollection, tradeContainer, 2, 220, 37));
+    }
+
+    private void replaceSlot(int index, Slot slot) {
+
+        slot.index = index;
+        this.slots.set(index, slot);
     }
 
     @Override
     public ContainerType<?> getType() {
 
         return TradingPostElement.TRADING_POST_CONTAINER;
-    }
-
-    @Override
-    public void setSelectionHint(int offerId) {
-
-        super.setSelectionHint(offerId);
-        this.traders.setActiveOffer(!this.getOffers().isEmpty() ? this.getOffers().get(offerId) : null);
     }
 
     @Override

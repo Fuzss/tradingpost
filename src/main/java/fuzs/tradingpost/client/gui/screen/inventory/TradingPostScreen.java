@@ -9,6 +9,7 @@ import fuzs.tradingpost.item.TradingPostOffers;
 import fuzs.tradingpost.mixin.client.accessor.ButtonAccessor;
 import fuzs.tradingpost.mixin.client.accessor.MerchantScreenAccessor;
 import fuzs.tradingpost.mixin.client.accessor.ScreenAccessor;
+import fuzs.tradingpost.mixin.client.accessor.TradeButtonAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.screen.inventory.MerchantScreen;
@@ -52,19 +53,19 @@ public class TradingPostScreen extends MerchantScreen {
     protected void init() {
 
         super.init();
-        this.tradeOfferButtons = this.getTradeOfferButtons(this.buttons, this.tradeOfferButtons.length);
-        for (int i = 0, length = this.tradeOfferButtons.length; i < length; i++) {
+        this.tradeOfferButtons = this.getTradeOfferButtons(this.buttons);
+        for (Button tradeOfferButton : this.tradeOfferButtons) {
 
-            final int index = i;
-            ((ButtonAccessor) this.tradeOfferButtons[i]).setOnPress(button -> {
+            ((ButtonAccessor) tradeOfferButton).setOnPress(button -> {
 
                 MerchantScreenAccessor accessor = (MerchantScreenAccessor) this;
-                final int shopItem = index + accessor.getScrollOff();
+                final int shopItem = ((TradeButtonAccessor) button).getIndex() + accessor.getScrollOff();
+                MerchantOffers offers = this.getMenu().getOffers();
                 accessor.setShopItem(shopItem);
                 this.getMenu().setSelectionHint(shopItem);
+                this.getMenu().getTraders().setActiveOffer(offers.get(shopItem));
                 this.getMenu().tryMoveItems(shopItem);
                 // get real index when sending to server
-                MerchantOffers offers = this.getMenu().getOffers();
                 this.minecraft.getConnection().send(new CSelectTradePacket(offers instanceof TradingPostOffers ? ((TradingPostOffers) offers).getOrigShopItem(shopItem) : shopItem));
             });
         }
@@ -76,20 +77,14 @@ public class TradingPostScreen extends MerchantScreen {
         this.children.add(this.searchBox);
     }
 
-    private Button[] getTradeOfferButtons(List<Widget> buttons, int amount) {
+    private Button[] getTradeOfferButtons(List<Widget> buttons) {
 
-        Button[] tradeOfferButtons = new Button[amount];
-        int j = 0, length = tradeOfferButtons.length;
-        for (int i = 0, size = buttons.size(); i < size && j < length; i++) {
+        Button[] tradeOfferButtons = buttons.stream()
+                .filter(button -> button instanceof TradeButtonAccessor)
+                .map(button -> (Button) button)
+                .toArray(Button[]::new);
 
-            Widget widget = buttons.get(i);
-            if (widget instanceof Button) {
-
-                tradeOfferButtons[j++] = (Button) widget;
-            }
-        }
-
-        if (j != length) {
+        if (tradeOfferButtons.length != 7) {
 
             TradingPost.LOGGER.warn("Unable to find enough tradeOfferButtons");
         }
@@ -105,7 +100,7 @@ public class TradingPostScreen extends MerchantScreen {
         this.searchBox.setValue(lastSearch);
         if (!this.searchBox.getValue().isEmpty()) {
 
-            this.refreshSearchResults(true);
+            this.refreshSearchResults();
         }
     }
 
@@ -120,6 +115,7 @@ public class TradingPostScreen extends MerchantScreen {
         MerchantScreenAccessor.setTradesLabel(tradesLabel);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTime) {
 
@@ -325,7 +321,7 @@ public class TradingPostScreen extends MerchantScreen {
 
             if (!Objects.equals(this.searchBox.getValue(), lastSearch)) {
 
-                this.refreshSearchResults(true);
+                this.refreshSearchResults();
             }
 
             return true;
@@ -350,7 +346,7 @@ public class TradingPostScreen extends MerchantScreen {
 
             if (!Objects.equals(this.searchBox.getValue(), lastSearch)) {
 
-                this.refreshSearchResults(true);
+                this.refreshSearchResults();
             }
 
             return true;
@@ -359,7 +355,7 @@ public class TradingPostScreen extends MerchantScreen {
         return super.charTyped(typedChar, modifierKeys);
     }
 
-    public void refreshSearchResults(boolean setSelectionHint) {
+    public void refreshSearchResults() {
 
         if (!(this.getMenu().getOffers() instanceof TradingPostOffers)) {
 
@@ -368,7 +364,6 @@ public class TradingPostScreen extends MerchantScreen {
 
         TradingPostOffers offers = (TradingPostOffers) this.getMenu().getOffers();
         MerchantScreenAccessor accessor = (MerchantScreenAccessor) this;
-        int origShopItem = offers.getOrigShopItem(accessor.getShopItem());
         String search = this.searchBox.getValue();
         if (search.isEmpty()) {
 
@@ -380,23 +375,9 @@ public class TradingPostScreen extends MerchantScreen {
         }
 
         accessor.setScrollOff(0);
-        if (origShopItem == 0) {
-
-            return;
-        }
-
-        int newShopItem = offers.getFilteredShopItem(origShopItem);
-        if (newShopItem == -1) {
-
-            newShopItem = 0;
-            this.minecraft.getConnection().send(new CSelectTradePacket(0));
-        }
-
-        if (newShopItem != origShopItem) {
-
-            accessor.setShopItem(newShopItem);
-            this.getMenu().setSelectionHint(newShopItem);
-        }
+        accessor.setShopItem(0);
+        this.getMenu().setSelectionHint(0);
+        this.getMenu().getTraders().setActiveOffer(null);
     }
 
     @Override

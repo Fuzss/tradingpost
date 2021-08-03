@@ -72,7 +72,7 @@ public class SBuildOffersMessage extends Message {
 
                 ((TradingPostContainer) container).getTraders().buildOffers(SBuildOffersMessage.this.idToOfferCount);
                 this.buildSearchTree(mc, ((TradingPostContainer) container).getOffers());
-                ((TradingPostScreen) mc.screen).refreshSearchResults(false);
+                ((TradingPostScreen) mc.screen).refreshSearchResults();
             }
         }
 

@@ -30,24 +30,24 @@ public class TradingPostTileEntity extends TileEntity implements INameable, ITic
     }
 
     @Override
-    public CompoundNBT save(CompoundNBT p_189515_1_) {
+    public CompoundNBT save(CompoundNBT compound) {
 
-        super.save(p_189515_1_);
+        super.save(compound);
         if (this.hasCustomName()) {
 
-            p_189515_1_.putString("CustomName", ITextComponent.Serializer.toJson(this.name));
+            compound.putString("CustomName", ITextComponent.Serializer.toJson(this.name));
         }
 
-        return p_189515_1_;
+        return compound;
     }
 
     @Override
-    public void load(BlockState p_230337_1_, CompoundNBT p_230337_2_) {
+    public void load(BlockState state, CompoundNBT compound) {
 
-        super.load(p_230337_1_, p_230337_2_);
-        if (p_230337_2_.contains("CustomName", 8)) {
+        super.load(state, compound);
+        if (compound.contains("CustomName", 8)) {
 
-            this.name = ITextComponent.Serializer.fromJson(p_230337_2_.getString("CustomName"));
+            this.name = ITextComponent.Serializer.fromJson(compound.getString("CustomName"));
         }
     }
 
@@ -117,9 +117,9 @@ public class TradingPostTileEntity extends TileEntity implements INameable, ITic
         return this.name != null ? this.name : TradingPostBlock.CONTAINER_TITLE;
     }
 
-    public void setCustomName(@Nullable ITextComponent p_200229_1_) {
+    public void setCustomName(@Nullable ITextComponent textComponent) {
 
-        this.name = p_200229_1_;
+        this.name = textComponent;
     }
 
     @Nullable
