@@ -3,32 +3,45 @@ package fuzs.tradingpost.client.gui.screen.inventory;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import fuzs.tradingpost.TradingPost;
+import fuzs.tradingpost.client.element.TradingPostExtension;
 import fuzs.tradingpost.inventory.container.TradingPostContainer;
+import fuzs.tradingpost.item.TradingPostOffers;
+import fuzs.tradingpost.mixin.client.accessor.ButtonAccessor;
 import fuzs.tradingpost.mixin.client.accessor.MerchantScreenAccessor;
 import fuzs.tradingpost.mixin.client.accessor.ScreenAccessor;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.screen.inventory.MerchantScreen;
+import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.client.util.ISearchTree;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.MerchantContainer;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.MerchantOffer;
 import net.minecraft.item.MerchantOffers;
+import net.minecraft.network.play.client.CSelectTradePacket;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 
 public class TradingPostScreen extends MerchantScreen {
 
     private static final ResourceLocation VILLAGER_LOCATION = new ResourceLocation("textures/gui/container/villager2.png");
+    private static final ResourceLocation CREATIVE_INVENTORY_LOCATION = new ResourceLocation("textures/gui/container/creative_inventory/tab_item_search.png");
     private static final ITextComponent DEPRECATED_TOOLTIP = new TranslationTextComponent("merchant.deprecated");
     private static final ITextComponent MERCHANT_GONE = new TranslationTextComponent("trading_post.trader_gone");
 
     private Button[] tradeOfferButtons = new Button[7];
+    private TextFieldWidget searchBox;
+    private boolean ignoreTextInput;
 
     public TradingPostScreen(MerchantContainer container, PlayerInventory playerInventory, ITextComponent title) {
 
@@ -40,6 +53,27 @@ public class TradingPostScreen extends MerchantScreen {
 
         super.init();
         this.tradeOfferButtons = this.getTradeOfferButtons(this.buttons, this.tradeOfferButtons.length);
+        for (int i = 0, length = this.tradeOfferButtons.length; i < length; i++) {
+
+            final int index = i;
+            ((ButtonAccessor) this.tradeOfferButtons[i]).setOnPress(button -> {
+
+                MerchantScreenAccessor accessor = (MerchantScreenAccessor) this;
+                final int shopItem = index + accessor.getScrollOff();
+                accessor.setShopItem(shopItem);
+                this.getMenu().setSelectionHint(shopItem);
+                this.getMenu().tryMoveItems(shopItem);
+                // get real index when sending to server
+                MerchantOffers offers = this.getMenu().getOffers();
+                this.minecraft.getConnection().send(new CSelectTradePacket(offers instanceof TradingPostOffers ? ((TradingPostOffers) offers).getOrigShopItem(shopItem) : shopItem));
+            });
+        }
+
+        this.searchBox = new TextFieldWidget(this.font, this.leftPos + 6, this.topPos + 6, 80, 9, new TranslationTextComponent("itemGroup.search"));
+        this.searchBox.setMaxLength(50);
+        this.searchBox.setBordered(false);
+        this.searchBox.setTextColor(16777215);
+        this.children.add(this.searchBox);
     }
 
     private Button[] getTradeOfferButtons(List<Widget> buttons, int amount) {
@@ -64,10 +98,26 @@ public class TradingPostScreen extends MerchantScreen {
     }
 
     @Override
+    public void resize(Minecraft mc, int newWidth, int newHeight) {
+
+        final String lastSearch = this.searchBox.getValue();
+        super.resize(mc, newWidth, newHeight);
+        this.searchBox.setValue(lastSearch);
+        if (!this.searchBox.getValue().isEmpty()) {
+
+            this.refreshSearchResults(true);
+        }
+    }
+
+    @Override
     protected void renderLabels(MatrixStack matrixStack, int mouseX, int mouseY) {
 
         ((ScreenAccessor) this).setTitle(this.getMenu().getTraders().getDisplayName());
+        // we render our search box there instead, don't want to copy base method just do this
+        ITextComponent tradesLabel = MerchantScreenAccessor.getTradesLabel();
+        MerchantScreenAccessor.setTradesLabel(StringTextComponent.EMPTY);
         super.renderLabels(matrixStack, mouseX, mouseY);
+        MerchantScreenAccessor.setTradesLabel(tradesLabel);
     }
 
     @Override
@@ -175,18 +225,6 @@ public class TradingPostScreen extends MerchantScreen {
                 this.renderTooltip(matrixStack, DEPRECATED_TOOLTIP, mouseX, mouseY);
             }
 
-            Button[] offerButtons = this.tradeOfferButtons;
-            for (int i = 0, offerButtonsLength = offerButtons.length; i < offerButtonsLength; i++) {
-
-                Button button = offerButtons[i];
-                if (button.active && button.isHovered()) {
-
-                    button.renderToolTip(matrixStack, mouseX, mouseY);
-                }
-
-                button.visible = i < this.getMenu().getOffers().size();
-            }
-
             posY = height + 16 + 2;
             for (int i = 0, merchantoffersSize = merchantoffers.size(); i < merchantoffersSize; i++) {
 
@@ -207,6 +245,19 @@ public class TradingPostScreen extends MerchantScreen {
 
             RenderSystem.popMatrix();
             RenderSystem.enableDepthTest();
+        }
+
+        // move this out of if block above since search may update this
+        Button[] offerButtons = this.tradeOfferButtons;
+        for (int i = 0, offerButtonsLength = offerButtons.length; i < offerButtonsLength; i++) {
+
+            Button button = offerButtons[i];
+            if (button.active && button.isHovered()) {
+
+                button.renderToolTip(matrixStack, mouseX, mouseY);
+            }
+
+            button.visible = i < this.getMenu().getOffers().size();
         }
 
         this.renderTooltip(matrixStack, mouseX, mouseY);
@@ -233,6 +284,119 @@ public class TradingPostScreen extends MerchantScreen {
         this.getMenu().lockOffers(lockOffers);
         ((MerchantScreenAccessor) this).setScrollOff(newScrollOff);
         this.hoveredSlot = newHoveredSlot;
+    }
+
+    @Override
+    protected void renderBg(MatrixStack matrixStack, float partialTicks, int mouseX, int mouseY) {
+
+        super.renderBg(matrixStack, partialTicks, mouseX, mouseY);
+        this.minecraft.getTextureManager().bind(CREATIVE_INVENTORY_LOCATION);
+        int i = (this.width - this.imageWidth) / 2;
+        int j = (this.height - this.imageHeight) / 2;
+        blit(matrixStack, i + 4, j + 4, this.getBlitOffset(), 80.0F, 4.0F, 90, 12, 256, 256);
+        this.searchBox.render(matrixStack, mouseX, mouseY, partialTicks);
+        this.minecraft.getTextureManager().bind(VILLAGER_LOCATION);
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int mouseKey) {
+
+        if (this.searchBox.mouseClicked(mouseX, mouseY, mouseKey)) {
+
+            return true;
+        }
+
+        return super.mouseClicked(mouseX, mouseY, mouseKey);
+    }
+
+    @Override
+    public void tick() {
+
+        super.tick();
+        this.searchBox.tick();
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifierKeys) {
+
+        this.ignoreTextInput = false;
+        final String lastSearch = this.searchBox.getValue();
+        if (this.searchBox.keyPressed(keyCode, scanCode, modifierKeys)) {
+
+            if (!Objects.equals(this.searchBox.getValue(), lastSearch)) {
+
+                this.refreshSearchResults(true);
+            }
+
+            return true;
+        } else if (this.searchBox.isFocused() && this.searchBox.isVisible() && keyCode != 256) {
+
+            return true;
+        } else if (this.minecraft.options.keyChat.matches(keyCode, scanCode) && !this.searchBox.isFocused()) {
+
+            this.ignoreTextInput = true;
+            this.searchBox.setFocus(true);
+            return true;
+        }
+
+        return super.keyPressed(keyCode, scanCode, modifierKeys);
+    }
+
+    @Override
+    public boolean charTyped(char typedChar, int modifierKeys) {
+
+        final String lastSearch = this.searchBox.getValue();
+        if (!this.ignoreTextInput && this.searchBox.charTyped(typedChar, modifierKeys)) {
+
+            if (!Objects.equals(this.searchBox.getValue(), lastSearch)) {
+
+                this.refreshSearchResults(true);
+            }
+
+            return true;
+        }
+
+        return super.charTyped(typedChar, modifierKeys);
+    }
+
+    public void refreshSearchResults(boolean setSelectionHint) {
+
+        if (!(this.getMenu().getOffers() instanceof TradingPostOffers)) {
+
+            return;
+        }
+
+        TradingPostOffers offers = (TradingPostOffers) this.getMenu().getOffers();
+        MerchantScreenAccessor accessor = (MerchantScreenAccessor) this;
+        int origShopItem = offers.getOrigShopItem(accessor.getShopItem());
+        String search = this.searchBox.getValue();
+        if (search.isEmpty()) {
+
+            offers.clearFilter();
+        } else {
+
+            ISearchTree<MerchantOffer> isearchtree = this.minecraft.getSearchTree(TradingPostExtension.OFFER_SEARCH_TREE);
+            offers.setFilter(isearchtree.search(search.toLowerCase(Locale.ROOT)));
+        }
+
+        accessor.setScrollOff(0);
+        if (origShopItem == 0) {
+
+            return;
+        }
+
+        int newShopItem = offers.getFilteredShopItem(origShopItem);
+        if (newShopItem == -1) {
+
+            newShopItem = 0;
+            this.minecraft.getConnection().send(new CSelectTradePacket(0));
+        }
+
+        if (newShopItem != origShopItem) {
+
+            accessor.setShopItem(newShopItem);
+            this.getMenu().setSelectionHint(newShopItem);
+        }
     }
 
     @Override

@@ -5,11 +5,13 @@ import net.minecraft.item.MerchantOffer;
 import net.minecraft.item.MerchantOffers;
 
 import javax.annotation.Nullable;
+import java.util.Collection;
 import java.util.Set;
 
 public class TradingPostOffers extends MerchantOffers {
 
     private final Set<MerchantOffer> disabledOffers;
+    private int[] indexToShopItem;
 
     public TradingPostOffers(Set<MerchantOffer> disabledOffers) {
 
@@ -36,6 +38,61 @@ public class TradingPostOffers extends MerchantOffers {
         }
 
         return null;
+    }
+
+    @Override
+    public int size() {
+
+        return this.indexToShopItem != null ? this.indexToShopItem.length : super.size();
+    }
+
+    @Override
+    public boolean isEmpty() {
+
+        return this.size() == 0;
+    }
+
+    @Override
+    public MerchantOffer get(int index) {
+
+        return super.get(this.indexToShopItem != null ? this.indexToShopItem[index] : index);
+    }
+
+    public void setFilter(Collection<MerchantOffer> activeOffers) {
+
+        this.indexToShopItem = activeOffers.stream()
+                .filter(this::contains)
+                .mapToInt(this::indexOf)
+                .toArray();
+    }
+
+    public void clearFilter() {
+
+        this.indexToShopItem = null;
+    }
+
+    public int getOrigShopItem(int filteredShopItem) {
+
+        return this.indexToShopItem != null && this.indexToShopItem.length > 0 ? this.indexToShopItem[filteredShopItem] : filteredShopItem;
+    }
+
+    public int getFilteredShopItem(int origShopItem) {
+
+        if (this.indexToShopItem == null) {
+
+            return origShopItem;
+        }
+
+        int[] indexToShopItem = this.indexToShopItem;
+        for (int i = 0, toShopItemLength = indexToShopItem.length; i < toShopItemLength; i++) {
+
+            if (indexToShopItem[i] == origShopItem) {
+
+                return i;
+            }
+        }
+
+        return -1;
     }
 
 }

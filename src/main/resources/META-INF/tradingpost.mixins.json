@@ -9,6 +9,7 @@
     "accessor.VillagerEntityAccessor"
   ],
   "client": [
+    "client.accessor.ButtonAccessor",
     "client.accessor.MerchantScreenAccessor",
     "client.accessor.ScreenAccessor"
   ],

@@ -90,8 +90,8 @@ public class TradingPostElement extends ClientExtensibleElement<TradingPostExten
     @Override
     public void setupCommonConfig(OptionsBuilder builder) {
 
-        builder.define("Horizontal Range", 8).range(1, 64).comment("Range on xz plane trading post should search for merchants.").sync(v -> this.horizontalRange = v);
-        builder.define("Vertical Range", 5).range(1, 64).comment("Range on y axis trading post should search for merchants.").sync(v -> this.verticalRange = v);
+        builder.define("Horizontal Range", 24).range(1, 96).comment("Range on xz plane trading post should search for merchants.").sync(v -> this.horizontalRange = v);
+        builder.define("Vertical Range", 16).range(1, 96).comment("Range on y axis trading post should search for merchants.").sync(v -> this.verticalRange = v);
         builder.define("Teleport Xp", true).comment("Teleport xp from trading from villagers on top of the trading post.").sync(v -> this.teleportXp = v);
         builder.define("Close Empty Screen", true).comment("Close trading post interface when all traders have become unavailable.").sync(v -> this.closeScreen = v);
         builder.define("Trader Blacklist", Lists.<String>newArrayList()).comment("Trader entities disabled from being found by the trading post.", "Modders may add their own incompatible trader entities via the \"" + TradingPost.MODID + ":blacklisted_traders\" entity tag.", EntryCollectionBuilder.CONFIG_STRING).sync(v -> this.traderBlacklist = ConfigManager.deserializeToSet(v, ForgeRegistries.ENTITIES));

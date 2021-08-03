@@ -79,7 +79,7 @@ public class TradingPostContainer extends MerchantContainer {
     public void setSelectionHint(int offerId) {
 
         super.setSelectionHint(offerId);
-        this.traders.setActiveOffer(this.getOffers().get(offerId));
+        this.traders.setActiveOffer(!this.getOffers().isEmpty() ? this.getOffers().get(offerId) : null);
     }
 
     @Override
