@@ -76,17 +76,18 @@ public class TradingPostContainer extends MerchantContainer {
 
     @Override
     public boolean stillValid(PlayerEntity player) {
-
+        final TradingPostElement element = (TradingPostElement) TradingPost.TRADING_POST;
+        // this also updates merchants, so run independent of config option
         // don't want this to go off on every tick
-        if (++this.ticks >= 20) {
-
+        Optional<Boolean> anyTrader = this.access.evaluate((level, pos) -> this.traders.updateAvailableMerchants(this.containerId, pos, player, element.enforceRange && ++this.ticks >= 20));
+        if (this.ticks >= 20) {
             this.ticks = 0;
-            Optional<Boolean> anyTrader = this.access.evaluate((level, pos) -> this.traders.checkAvailableMerchants(this.containerId, pos, player));
-            if (((TradingPostElement) TradingPost.TRADING_POST).closeScreen && anyTrader.isPresent() && !anyTrader.get()) {
 
-                player.displayClientMessage(TradingPostBlock.NO_MERCHANT_FOUND, false);
-                return false;
-            }
+        }
+        if (element.closeScreen && anyTrader.isPresent() && !anyTrader.get()) {
+
+            player.displayClientMessage(TradingPostBlock.NO_MERCHANT_FOUND, false);
+            return false;
         }
 
         return stillValid(this.access, player, TradingPostElement.TRADING_POST_BLOCK);

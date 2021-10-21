@@ -10,9 +10,9 @@ import fuzs.tradingpost.TradingPost;
 import fuzs.tradingpost.block.TradingPostBlock;
 import fuzs.tradingpost.client.element.TradingPostExtension;
 import fuzs.tradingpost.inventory.container.TradingPostContainer;
-import fuzs.tradingpost.network.message.SBuildOffersMessage;
-import fuzs.tradingpost.network.message.SMerchantDataMessage;
-import fuzs.tradingpost.network.message.SRemoveMerchantsMessage;
+import fuzs.tradingpost.network.message.S2CBuildOffersMessage;
+import fuzs.tradingpost.network.message.S2CMerchantDataMessage;
+import fuzs.tradingpost.network.message.S2CRemoveMerchantsMessage;
 import fuzs.tradingpost.tileentity.TradingPostTileEntity;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
@@ -27,6 +27,7 @@ import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.Tags;
 import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.ObjectHolder;
 
@@ -47,6 +48,7 @@ public class TradingPostElement extends ClientExtensibleElement<TradingPostExten
 
     public int horizontalRange;
     public int verticalRange;
+    public boolean enforceRange;
     public boolean teleportXp;
     public boolean closeScreen;
     public Set<EntityType<?>> traderBlacklist;
@@ -59,7 +61,7 @@ public class TradingPostElement extends ClientExtensibleElement<TradingPostExten
     @Override
     public String[] getDescription() {
 
-        return new String[]{"A unique utility for the true bargain hunter looking for the best possible deal."};
+        return new String[]{"Rule the village! Trade with every villager at once!"};
     }
 
     @Override
@@ -68,17 +70,15 @@ public class TradingPostElement extends ClientExtensibleElement<TradingPostExten
         return true;
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void constructCommon() {
 
-        PuzzlesLib.getNetworkHandler().registerMessage(SMerchantDataMessage::new, LogicalSide.CLIENT);
-        PuzzlesLib.getNetworkHandler().registerMessage(SRemoveMerchantsMessage::new, LogicalSide.CLIENT);
-        PuzzlesLib.getNetworkHandler().registerMessage(SBuildOffersMessage::new, LogicalSide.CLIENT);
-
-        PuzzlesLib.getRegistryManager().registerBlockWithItem("trading_post", () -> new TradingPostBlock(AbstractBlock.Properties.of(Material.WOOD).strength(2.5F).sound(SoundType.WOOD)), ItemGroup.TAB_DECORATIONS);
-        PuzzlesLib.getRegistryManager().registerTileEntityType("trading_post", () -> TileEntityType.Builder.of(TradingPostTileEntity::new, TRADING_POST_BLOCK).build(null));
-        PuzzlesLib.getRegistryManager().registerContainerType("trading_post", () -> new ContainerType<>(TradingPostContainer::new));
+        PuzzlesLib.getNetworkHandlerV2().register(S2CMerchantDataMessage.class, S2CMerchantDataMessage::new, NetworkDirection.PLAY_TO_CLIENT);
+        PuzzlesLib.getNetworkHandlerV2().register(S2CRemoveMerchantsMessage.class, S2CRemoveMerchantsMessage::new, NetworkDirection.PLAY_TO_CLIENT);
+        PuzzlesLib.getNetworkHandlerV2().register(S2CBuildOffersMessage.class, S2CBuildOffersMessage::new, NetworkDirection.PLAY_TO_CLIENT);
+        PuzzlesLib.getRegistryManagerV2().registerBlockWithItem("trading_post", () -> new TradingPostBlock(AbstractBlock.Properties.of(Material.WOOD).strength(2.5F).sound(SoundType.WOOD)), ItemGroup.TAB_DECORATIONS);
+        PuzzlesLib.getRegistryManagerV2().registerRawTileEntityType("trading_post", () -> TileEntityType.Builder.of(TradingPostTileEntity::new, TRADING_POST_BLOCK));
+        PuzzlesLib.getRegistryManagerV2().registerRawContainerType("trading_post", () -> TradingPostContainer::new);
     }
 
     @Override
@@ -92,6 +92,7 @@ public class TradingPostElement extends ClientExtensibleElement<TradingPostExten
 
         builder.define("Horizontal Range", 24).range(1, 96).comment("Range on xz plane trading post should search for merchants.").sync(v -> this.horizontalRange = v);
         builder.define("Vertical Range", 16).range(1, 96).comment("Range on y axis trading post should search for merchants.").sync(v -> this.verticalRange = v);
+        builder.define("Enforce Range", false).comment("Disable traders on the trading screen when they wander out of range.").sync(v -> this.enforceRange = v);
         builder.define("Teleport Xp", true).comment("Teleport xp from trading from villagers on top of the trading post.").sync(v -> this.teleportXp = v);
         builder.define("Close Empty Screen", true).comment("Close trading post interface when all traders have become unavailable.").sync(v -> this.closeScreen = v);
         builder.define("Trader Blacklist", Lists.<String>newArrayList()).comment("Trader entities disabled from being found by the trading post.", "Modders may add their own incompatible trader entities via the \"" + TradingPost.MODID + ":blacklisted_traders\" entity tag.", EntryCollectionBuilder.CONFIG_STRING).sync(v -> this.traderBlacklist = ConfigManager.deserializeToSet(v, ForgeRegistries.ENTITIES));

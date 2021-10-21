@@ -33,16 +33,4 @@ public interface MerchantScreenAccessor {
     @Invoker
     void callRenderProgressBar(MatrixStack matrixStack, int width, int height, MerchantOffer activeOffer);
 
-    @Accessor("TRADES_LABEL")
-    static ITextComponent getTradesLabel() {
-
-        throw new IllegalStateException();
-    }
-
-    @Accessor("TRADES_LABEL")
-    static void setTradesLabel(ITextComponent tradesLabel) {
-
-        throw new IllegalStateException();
-    }
-
 }

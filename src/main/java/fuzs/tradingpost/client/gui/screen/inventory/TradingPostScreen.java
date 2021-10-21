@@ -8,7 +8,6 @@ import fuzs.tradingpost.inventory.container.TradingPostContainer;
 import fuzs.tradingpost.item.TradingPostOffers;
 import fuzs.tradingpost.mixin.client.accessor.ButtonAccessor;
 import fuzs.tradingpost.mixin.client.accessor.MerchantScreenAccessor;
-import fuzs.tradingpost.mixin.client.accessor.ScreenAccessor;
 import fuzs.tradingpost.mixin.client.accessor.TradeButtonAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
@@ -26,7 +25,6 @@ import net.minecraft.item.MerchantOffers;
 import net.minecraft.network.play.client.CSelectTradePacket;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 
 import java.util.List;
@@ -107,12 +105,17 @@ public class TradingPostScreen extends MerchantScreen {
     @Override
     protected void renderLabels(MatrixStack matrixStack, int mouseX, int mouseY) {
 
-        ((ScreenAccessor) this).setTitle(this.getMenu().getTraders().getDisplayName());
-        // we render our search box there instead, don't want to copy base method just do this
-        ITextComponent tradesLabel = MerchantScreenAccessor.getTradesLabel();
-        MerchantScreenAccessor.setTradesLabel(StringTextComponent.EMPTY);
-        super.renderLabels(matrixStack, mouseX, mouseY);
-        MerchantScreenAccessor.setTradesLabel(tradesLabel);
+        ITextComponent title = this.getMenu().getTraders().getDisplayName();
+        if (title != null) {
+            int traderLevel = this.menu.getTraderLevel();
+            if (traderLevel > 0 && traderLevel <= 5 && this.menu.showProgressBar()) {
+                title = title.copy().append(" - ").append(new TranslationTextComponent("merchant.level." + traderLevel));
+            }
+        } else {
+            title = this.title;
+        }
+        this.font.draw(matrixStack, title, (float)(49 + this.imageWidth / 2 - this.font.width(title) / 2), 6.0F, 4210752);
+        this.font.draw(matrixStack, this.inventory.getDisplayName(), (float)this.inventoryLabelX, (float)this.inventoryLabelY, 4210752);
     }
 
     @SuppressWarnings("deprecation")
@@ -286,12 +289,16 @@ public class TradingPostScreen extends MerchantScreen {
     protected void renderBg(MatrixStack matrixStack, float partialTicks, int mouseX, int mouseY) {
 
         super.renderBg(matrixStack, partialTicks, mouseX, mouseY);
+        this.renderSearchBox(matrixStack, partialTicks, mouseX, mouseY);
+        this.minecraft.getTextureManager().bind(VILLAGER_LOCATION);
+    }
+
+    private void renderSearchBox(MatrixStack matrixStack, float partialTicks, int mouseX, int mouseY) {
         this.minecraft.getTextureManager().bind(CREATIVE_INVENTORY_LOCATION);
         int i = (this.width - this.imageWidth) / 2;
         int j = (this.height - this.imageHeight) / 2;
         blit(matrixStack, i + 4, j + 4, this.getBlitOffset(), 80.0F, 4.0F, 90, 12, 256, 256);
         this.searchBox.render(matrixStack, mouseX, mouseY, partialTicks);
-        this.minecraft.getTextureManager().bind(VILLAGER_LOCATION);
     }
 
     @Override

@@ -1,6 +1,6 @@
 package fuzs.tradingpost.network.message;
 
-import fuzs.puzzleslib.network.message.Message;
+import fuzs.puzzleslib.network.v2.message.Message;
 import fuzs.tradingpost.inventory.container.TradingPostContainer;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.container.Container;
@@ -8,7 +8,7 @@ import net.minecraft.item.MerchantOffers;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.text.ITextComponent;
 
-public class SMerchantDataMessage extends Message {
+public class S2CMerchantDataMessage implements Message {
 
     private int containerId;
     private int merchantId;
@@ -19,11 +19,11 @@ public class SMerchantDataMessage extends Message {
     private boolean showProgress;
     private boolean canRestock;
 
-    public SMerchantDataMessage() {
+    public S2CMerchantDataMessage() {
 
     }
 
-    public SMerchantDataMessage(int containerId, int merchantId, ITextComponent merchantTitle, MerchantOffers offers, int villagerLevel, int villagerXp, boolean showProgress, boolean canRestock) {
+    public S2CMerchantDataMessage(int containerId, int merchantId, ITextComponent merchantTitle, MerchantOffers offers, int villagerLevel, int villagerXp, boolean showProgress, boolean canRestock) {
 
         this.containerId = containerId;
         this.merchantId = merchantId;
@@ -62,23 +62,20 @@ public class SMerchantDataMessage extends Message {
     }
 
     @Override
-    protected MessageProcessor createProcessor() {
-
-        return new MerchantDataProcessor();
+    public MerchantDataHandler makeHandler() {
+        return new MerchantDataHandler();
     }
 
-    private class MerchantDataProcessor implements MessageProcessor {
+    private static class MerchantDataHandler extends PacketHandler<S2CMerchantDataMessage> {
 
         @Override
-        public void accept(PlayerEntity playerEntity) {
+        public void handle(S2CMerchantDataMessage packet, PlayerEntity player, Object gameInstance) {
+            Container container = player.containerMenu;
+            if (packet.containerId == container.containerId && container instanceof TradingPostContainer) {
 
-            Container container = playerEntity.containerMenu;
-            if (SMerchantDataMessage.this.containerId == container.containerId && container instanceof TradingPostContainer) {
-
-                ((TradingPostContainer) container).addMerchant(playerEntity, SMerchantDataMessage.this.merchantId, SMerchantDataMessage.this.merchantTitle, new MerchantOffers(SMerchantDataMessage.this.offers.createTag()), SMerchantDataMessage.this.villagerLevel, SMerchantDataMessage.this.villagerXp, SMerchantDataMessage.this.showProgress, SMerchantDataMessage.this.canRestock);
+                ((TradingPostContainer) container).addMerchant(player, packet.merchantId, packet.merchantTitle, new MerchantOffers(packet.offers.createTag()), packet.villagerLevel, packet.villagerXp, packet.showProgress, packet.canRestock);
             }
         }
-
     }
 
 }

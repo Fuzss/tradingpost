@@ -7,9 +7,9 @@ import fuzs.tradingpost.TradingPost;
 import fuzs.tradingpost.block.TradingPostBlock;
 import fuzs.tradingpost.element.TradingPostElement;
 import fuzs.tradingpost.item.TradingPostOffers;
-import fuzs.tradingpost.network.message.SBuildOffersMessage;
-import fuzs.tradingpost.network.message.SMerchantDataMessage;
-import fuzs.tradingpost.network.message.SRemoveMerchantsMessage;
+import fuzs.tradingpost.network.message.S2CBuildOffersMessage;
+import fuzs.tradingpost.network.message.S2CMerchantDataMessage;
+import fuzs.tradingpost.network.message.S2CRemoveMerchantsMessage;
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.entity.Entity;
@@ -228,6 +228,7 @@ public class MerchantCollection implements IMerchant {
     }
 
     @OnlyIn(Dist.CLIENT)
+    @Nullable
     public ITextComponent getDisplayName() {
 
         if (this.currentMerchant != null) {
@@ -242,17 +243,17 @@ public class MerchantCollection implements IMerchant {
             }
         }
 
-        return TradingPostBlock.CONTAINER_TITLE;
+        return null;
     }
 
-    public boolean checkAvailableMerchants(int containerId, BlockPos pos, PlayerEntity player) {
+    public boolean updateAvailableMerchants(int containerId, BlockPos pos, PlayerEntity player, boolean testRange) {
 
         IntSet toRemove = new IntOpenHashSet();
         for (Map.Entry<Integer, IMerchant> entry : this.idToMerchant.int2ObjectEntrySet()) {
 
             if (entry.getValue() instanceof Entity) {
 
-                if (!this.traderInRange((Entity) entry.getValue(), pos)) {
+                if (entry.getValue().getTradingPlayer() != player || testRange && !this.traderInRange((Entity) entry.getValue(), pos)) {
 
                     toRemove.add(entry.getKey().intValue());
                 }
@@ -262,7 +263,7 @@ public class MerchantCollection implements IMerchant {
         if (!toRemove.isEmpty()) {
 
             toRemove.forEach((IntConsumer) this::removeMerchant);
-            PuzzlesLib.getNetworkHandler().sendTo(new SRemoveMerchantsMessage(containerId, toRemove), (ServerPlayerEntity) player);
+            PuzzlesLib.getNetworkHandlerV2().sendTo(new S2CRemoveMerchantsMessage(containerId, toRemove), (ServerPlayerEntity) player);
         }
 
         return !this.idToMerchant.isEmpty();
@@ -307,11 +308,11 @@ public class MerchantCollection implements IMerchant {
             final ITextComponent merchantTitle = merchant instanceof Entity ? ((Entity) merchant).getDisplayName() : TradingPostBlock.CONTAINER_TITLE;
             final int merchantLevel = merchant instanceof IVillagerDataHolder ? ((IVillagerDataHolder) merchant).getVillagerData().getLevel() : 0;
 
-            SMerchantDataMessage message = new SMerchantDataMessage(containerId, entry.getKey(), merchantTitle, merchant.getOffers(), merchantLevel, merchant.getVillagerXp(), merchant.showProgressBar(), merchant.canRestock());
-            PuzzlesLib.getNetworkHandler().sendTo(message, (ServerPlayerEntity) player);
+            S2CMerchantDataMessage message = new S2CMerchantDataMessage(containerId, entry.getKey(), merchantTitle, merchant.getOffers(), merchantLevel, merchant.getVillagerXp(), merchant.showProgressBar(), merchant.canRestock());
+            PuzzlesLib.getNetworkHandlerV2().sendTo(message, (ServerPlayerEntity) player);
         }
 
-        PuzzlesLib.getNetworkHandler().sendTo(new SBuildOffersMessage(containerId, this.getIdToOfferCountMap()), (ServerPlayerEntity) player);
+        PuzzlesLib.getNetworkHandlerV2().sendTo(new S2CBuildOffersMessage(containerId, this.getIdToOfferCountMap()), (ServerPlayerEntity) player);
     }
 
     public Int2IntOpenHashMap getIdToOfferCountMap() {

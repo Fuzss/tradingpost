@@ -1,6 +1,6 @@
 package fuzs.tradingpost.network.message;
 
-import fuzs.puzzleslib.network.message.Message;
+import fuzs.puzzleslib.network.v2.message.Message;
 import fuzs.tradingpost.client.element.TradingPostExtension;
 import fuzs.tradingpost.client.gui.screen.inventory.TradingPostScreen;
 import fuzs.tradingpost.inventory.container.TradingPostContainer;
@@ -14,16 +14,16 @@ import net.minecraft.item.MerchantOffer;
 import net.minecraft.item.MerchantOffers;
 import net.minecraft.network.PacketBuffer;
 
-public class SBuildOffersMessage extends Message {
+public class S2CBuildOffersMessage implements Message {
 
     private int containerId;
     private Int2IntOpenHashMap idToOfferCount;
 
-    public SBuildOffersMessage() {
+    public S2CBuildOffersMessage() {
 
     }
 
-    public SBuildOffersMessage(int containerId, Int2IntOpenHashMap idToOfferCount) {
+    public S2CBuildOffersMessage(int containerId, Int2IntOpenHashMap idToOfferCount) {
 
         this.containerId = containerId;
         this.idToOfferCount = idToOfferCount;
@@ -56,21 +56,19 @@ public class SBuildOffersMessage extends Message {
     }
 
     @Override
-    protected MessageProcessor createProcessor() {
-
-        return new BuildOffersProcessor();
+    public BuildOffersHandler makeHandler() {
+        return new BuildOffersHandler();
     }
 
-    private class BuildOffersProcessor implements MessageProcessor {
+    private static class BuildOffersHandler extends PacketHandler<S2CBuildOffersMessage> {
 
         @Override
-        public void accept(PlayerEntity playerEntity) {
-
+        public void handle(S2CBuildOffersMessage packet, PlayerEntity player, Object gameInstance) {
             Minecraft mc = Minecraft.getInstance();
-            Container container = playerEntity.containerMenu;
-            if (SBuildOffersMessage.this.containerId == container.containerId && container instanceof TradingPostContainer && mc.screen instanceof TradingPostScreen) {
+            Container container = player.containerMenu;
+            if (packet.containerId == container.containerId && container instanceof TradingPostContainer && mc.screen instanceof TradingPostScreen) {
 
-                ((TradingPostContainer) container).getTraders().buildOffers(SBuildOffersMessage.this.idToOfferCount);
+                ((TradingPostContainer) container).getTraders().buildOffers(packet.idToOfferCount);
                 this.buildSearchTree(mc, ((TradingPostContainer) container).getOffers());
                 ((TradingPostScreen) mc.screen).refreshSearchResults();
             }

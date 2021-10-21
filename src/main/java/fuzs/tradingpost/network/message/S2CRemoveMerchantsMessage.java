@@ -1,6 +1,6 @@
 package fuzs.tradingpost.network.message;
 
-import fuzs.puzzleslib.network.message.Message;
+import fuzs.puzzleslib.network.v2.message.Message;
 import fuzs.tradingpost.inventory.container.TradingPostContainer;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -8,16 +8,16 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.network.PacketBuffer;
 
-public class SRemoveMerchantsMessage extends Message {
+public class S2CRemoveMerchantsMessage implements Message {
 
     private int containerId;
     private IntSet merchantIds;
 
-    public SRemoveMerchantsMessage() {
+    public S2CRemoveMerchantsMessage() {
 
     }
 
-    public SRemoveMerchantsMessage(int containerId, IntSet merchantIds) {
+    public S2CRemoveMerchantsMessage(int containerId, IntSet merchantIds) {
 
         this.containerId = containerId;
         this.merchantIds = merchantIds;
@@ -49,26 +49,23 @@ public class SRemoveMerchantsMessage extends Message {
     }
 
     @Override
-    protected MessageProcessor createProcessor() {
-
-        return new RemoveMerchantProcessor();
+    public RemoveMerchantHandler makeHandler() {
+        return new RemoveMerchantHandler();
     }
 
-    private class RemoveMerchantProcessor implements MessageProcessor {
+    private static class RemoveMerchantHandler extends PacketHandler<S2CRemoveMerchantsMessage> {
 
         @Override
-        public void accept(PlayerEntity playerEntity) {
+        public void handle(S2CRemoveMerchantsMessage packet, PlayerEntity player, Object gameInstance) {
+            Container container = player.containerMenu;
+            if (packet.containerId == container.containerId && container instanceof TradingPostContainer) {
 
-            Container container = playerEntity.containerMenu;
-            if (SRemoveMerchantsMessage.this.containerId == container.containerId && container instanceof TradingPostContainer) {
-
-                for (int merchantId : SRemoveMerchantsMessage.this.merchantIds) {
+                for (int merchantId : packet.merchantIds) {
 
                     ((TradingPostContainer) container).getTraders().removeMerchant(merchantId);
                 }
             }
         }
-
     }
 
 }

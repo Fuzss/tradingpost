@@ -24,7 +24,6 @@ import net.minecraft.pathfinding.PathType;
 import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.StateContainer;
 import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.tileentity.EnchantingTableTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.*;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -174,7 +173,7 @@ public class TradingPostBlock extends Block implements IWaterLoggable {
     private ITextComponent getContainerTitle(World level, BlockPos pos) {
 
         TileEntity tileentity = level.getBlockEntity(pos);
-        return tileentity instanceof EnchantingTableTileEntity ? ((INameable) tileentity).getDisplayName() : TradingPostBlock.CONTAINER_TITLE;
+        return tileentity instanceof TradingPostTileEntity ? ((INameable) tileentity).getDisplayName() : TradingPostBlock.CONTAINER_TITLE;
     }
 
     private void openTradingScreen(PlayerEntity player, MerchantCollection merchants, ITextComponent title, IWorldPosCallable worldPosCallable) {
