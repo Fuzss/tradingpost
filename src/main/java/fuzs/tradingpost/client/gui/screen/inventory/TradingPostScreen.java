@@ -25,6 +25,7 @@ import net.minecraft.item.MerchantOffers;
 import net.minecraft.network.play.client.CSelectTradePacket;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 
 import java.util.List;
@@ -37,6 +38,7 @@ public class TradingPostScreen extends MerchantScreen {
     private static final ResourceLocation CREATIVE_INVENTORY_LOCATION = new ResourceLocation("textures/gui/container/creative_inventory/tab_item_search.png");
     private static final ITextComponent DEPRECATED_TOOLTIP = new TranslationTextComponent("merchant.deprecated");
     private static final ITextComponent MERCHANT_GONE = new TranslationTextComponent("trading_post.trader_gone");
+    private static final ITextComponent SEARCH_COMPONENT = new TranslationTextComponent("trading_post.search").withStyle(TextFormatting.GRAY).withStyle(TextFormatting.ITALIC);
 
     private Button[] tradeOfferButtons = new Button[7];
     private TextFieldWidget searchBox;
@@ -68,7 +70,25 @@ public class TradingPostScreen extends MerchantScreen {
             });
         }
 
-        this.searchBox = new TextFieldWidget(this.font, this.leftPos + 6, this.topPos + 6, 80, 9, new TranslationTextComponent("itemGroup.search"));
+        this.searchBox = new TextFieldWidget(this.font, this.leftPos + 6, this.topPos + 6, 80, 9, new TranslationTextComponent("itemGroup.search")) {
+            @Override
+            public boolean mouseClicked(double mouseX, double mouseY, int button) {
+                // left click clears text
+                if (this.isVisible() && button == 1) {
+                    this.setValue("");
+                    TradingPostScreen.this.refreshSearchResults();
+                }
+                return super.mouseClicked(mouseX, mouseY, button);
+            }
+
+            @Override
+            public void renderButton(MatrixStack poseStack, int mouseX, int mouseY, float partialTime) {
+                super.renderButton(poseStack, mouseX, mouseY, partialTime);
+                if (this.isVisible() && !this.isFocused() && this.getValue().isEmpty()) {
+                    drawString(poseStack, TradingPostScreen.this.font, SEARCH_COMPONENT, this.x, this.y, 16777215);
+                }
+            }
+        };
         this.searchBox.setMaxLength(50);
         this.searchBox.setBordered(false);
         this.searchBox.setTextColor(16777215);
