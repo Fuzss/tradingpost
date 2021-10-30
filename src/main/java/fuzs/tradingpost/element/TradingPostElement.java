@@ -10,6 +10,7 @@ import fuzs.tradingpost.TradingPost;
 import fuzs.tradingpost.block.TradingPostBlock;
 import fuzs.tradingpost.client.element.TradingPostExtension;
 import fuzs.tradingpost.inventory.container.TradingPostContainer;
+import fuzs.tradingpost.network.message.C2SClearSlotsMessage;
 import fuzs.tradingpost.network.message.S2CBuildOffersMessage;
 import fuzs.tradingpost.network.message.S2CMerchantDataMessage;
 import fuzs.tradingpost.network.message.S2CRemoveMerchantsMessage;
@@ -76,6 +77,7 @@ public class TradingPostElement extends ClientExtensibleElement<TradingPostExten
         PuzzlesLib.getNetworkHandlerV2().register(S2CMerchantDataMessage.class, S2CMerchantDataMessage::new, NetworkDirection.PLAY_TO_CLIENT);
         PuzzlesLib.getNetworkHandlerV2().register(S2CRemoveMerchantsMessage.class, S2CRemoveMerchantsMessage::new, NetworkDirection.PLAY_TO_CLIENT);
         PuzzlesLib.getNetworkHandlerV2().register(S2CBuildOffersMessage.class, S2CBuildOffersMessage::new, NetworkDirection.PLAY_TO_CLIENT);
+        PuzzlesLib.getNetworkHandlerV2().register(C2SClearSlotsMessage.class, C2SClearSlotsMessage::new, NetworkDirection.PLAY_TO_SERVER);
         PuzzlesLib.getRegistryManagerV2().registerBlockWithItem("trading_post", () -> new TradingPostBlock(AbstractBlock.Properties.of(Material.WOOD).strength(2.5F).sound(SoundType.WOOD)), ItemGroup.TAB_DECORATIONS);
         PuzzlesLib.getRegistryManagerV2().registerRawTileEntityType("trading_post", () -> TileEntityType.Builder.of(TradingPostTileEntity::new, TRADING_POST_BLOCK));
         PuzzlesLib.getRegistryManagerV2().registerRawContainerType("trading_post", () -> TradingPostContainer::new);

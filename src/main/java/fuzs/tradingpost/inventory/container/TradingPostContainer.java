@@ -11,6 +11,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.merchant.IMerchant;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.MerchantInventory;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.inventory.container.MerchantContainer;
 import net.minecraft.inventory.container.MerchantResultSlot;
@@ -29,37 +30,33 @@ public class TradingPostContainer extends MerchantContainer {
 
     private final IWorldPosCallable access;
     private final MerchantCollection traders;
+    private final MerchantInventory tradeContainer;
 
     private int ticks;
     private boolean lockOffers;
 
     public TradingPostContainer(int containerId, PlayerInventory playerInventory) {
-
         super(containerId, playerInventory);
-
         this.access = IWorldPosCallable.NULL;
         this.traders = new MerchantCollection(this.access, playerInventory.player.level);
         ((MerchantContainerAccessor) this).setTrader(this.traders);
-        this.updateTradingSlots(playerInventory, this.traders);
+        this.tradeContainer = new TradingPostInventory(this.traders);
+        ((MerchantContainerAccessor) this).setTradeContainer(this.tradeContainer);
+        this.replaceSlot(0, new Slot(this.tradeContainer, 0, 136, 37));
+        this.replaceSlot(1, new Slot(this.tradeContainer, 1, 162, 37));
+        this.replaceSlot(2, new MerchantResultSlot(playerInventory.player, this.traders, this.tradeContainer, 2, 220, 37));
     }
 
     public TradingPostContainer(int containerId, PlayerInventory playerInventory, MerchantCollection merchantCollection, IWorldPosCallable worldPosCallable) {
-
         super(containerId, playerInventory, merchantCollection);
-
         this.access = worldPosCallable;
         this.traders = merchantCollection;
         ((MerchantContainerAccessor) this).setTrader(this.traders);
-        this.updateTradingSlots(playerInventory, this.traders);
-    }
-
-    private void updateTradingSlots(PlayerInventory playerInventory, MerchantCollection merchantCollection) {
-
-        TradingPostInventory tradeContainer = new TradingPostInventory(merchantCollection);
-        ((MerchantContainerAccessor) this).setTradeContainer(tradeContainer);
-        this.replaceSlot(0, new Slot(tradeContainer, 0, 136, 37));
-        this.replaceSlot(1, new Slot(tradeContainer, 1, 162, 37));
-        this.replaceSlot(2, new MerchantResultSlot(playerInventory.player, merchantCollection, tradeContainer, 2, 220, 37));
+        this.tradeContainer = new TradingPostInventory(this.traders);
+        ((MerchantContainerAccessor) this).setTradeContainer(this.tradeContainer);
+        this.replaceSlot(0, new Slot(this.tradeContainer, 0, 136, 37));
+        this.replaceSlot(1, new Slot(this.tradeContainer, 1, 162, 37));
+        this.replaceSlot(2, new MerchantResultSlot(playerInventory.player, this.traders, this.tradeContainer, 2, 220, 37));
     }
 
     private void replaceSlot(int index, Slot slot) {
@@ -80,16 +77,11 @@ public class TradingPostContainer extends MerchantContainer {
         // this also updates merchants, so run independent of config option
         // don't want this to go off on every tick
         Optional<Boolean> anyTrader = this.access.evaluate((level, pos) -> this.traders.updateAvailableMerchants(this.containerId, pos, player, element.enforceRange && ++this.ticks >= 20));
-        if (this.ticks >= 20) {
-            this.ticks = 0;
-
-        }
+        if (this.ticks >= 20) this.ticks = 0;
         if (element.closeScreen && anyTrader.isPresent() && !anyTrader.get()) {
-
             player.displayClientMessage(TradingPostBlock.NO_MERCHANT_FOUND, false);
             return false;
         }
-
         return stillValid(this.access, player, TradingPostElement.TRADING_POST_BLOCK);
     }
 
@@ -146,6 +138,26 @@ public class TradingPostContainer extends MerchantContainer {
                 Entity entity = (Entity) merchant;
                 this.traders.getLevel().playLocalSound(entity.getX(), entity.getY(), entity.getZ(), this.traders.getNotifyTradeSound(), SoundCategory.NEUTRAL, 1.0F, 1.0F, false);
             }
+        }
+    }
+
+    public void clearPaymentSlots() {
+        ItemStack itemstack = this.tradeContainer.getItem(0);
+        if (!itemstack.isEmpty()) {
+            if (!this.moveItemStackTo(itemstack, 3, 39, true)) {
+                return;
+            }
+
+            this.tradeContainer.setItem(0, itemstack);
+        }
+
+        ItemStack itemstack1 = this.tradeContainer.getItem(1);
+        if (!itemstack1.isEmpty()) {
+            if (!this.moveItemStackTo(itemstack1, 3, 39, true)) {
+                return;
+            }
+
+            this.tradeContainer.setItem(1, itemstack1);
         }
     }
 

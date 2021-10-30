@@ -2,6 +2,7 @@ package fuzs.tradingpost.client.gui.screen.inventory;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import fuzs.puzzleslib.PuzzlesLib;
 import fuzs.tradingpost.TradingPost;
 import fuzs.tradingpost.client.element.TradingPostExtension;
 import fuzs.tradingpost.inventory.container.TradingPostContainer;
@@ -9,15 +10,18 @@ import fuzs.tradingpost.item.TradingPostOffers;
 import fuzs.tradingpost.mixin.client.accessor.ButtonAccessor;
 import fuzs.tradingpost.mixin.client.accessor.MerchantScreenAccessor;
 import fuzs.tradingpost.mixin.client.accessor.TradeButtonAccessor;
+import fuzs.tradingpost.network.message.C2SClearSlotsMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.screen.inventory.MerchantScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.util.ISearchTree;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.MerchantContainer;
+import net.minecraft.inventory.container.PlayerContainer;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.MerchantOffer;
@@ -25,7 +29,6 @@ import net.minecraft.item.MerchantOffers;
 import net.minecraft.network.play.client.CSelectTradePacket;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 
 import java.util.List;
@@ -38,7 +41,6 @@ public class TradingPostScreen extends MerchantScreen {
     private static final ResourceLocation CREATIVE_INVENTORY_LOCATION = new ResourceLocation("textures/gui/container/creative_inventory/tab_item_search.png");
     private static final ITextComponent DEPRECATED_TOOLTIP = new TranslationTextComponent("merchant.deprecated");
     private static final ITextComponent MERCHANT_GONE = new TranslationTextComponent("trading_post.trader_gone");
-    private static final ITextComponent SEARCH_COMPONENT = new TranslationTextComponent("trading_post.search").withStyle(TextFormatting.GRAY).withStyle(TextFormatting.ITALIC);
 
     private Button[] tradeOfferButtons = new Button[7];
     private TextFieldWidget searchBox;
@@ -70,7 +72,7 @@ public class TradingPostScreen extends MerchantScreen {
             });
         }
 
-        this.searchBox = new TextFieldWidget(this.font, this.leftPos + 6, this.topPos + 6, 80, 9, new TranslationTextComponent("itemGroup.search")) {
+        this.searchBox = new TextFieldWidget(this.font, this.leftPos + 13, this.topPos + 6, 80, 9, new TranslationTextComponent("itemGroup.search")) {
             @Override
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
                 // left click clears text
@@ -79,14 +81,6 @@ public class TradingPostScreen extends MerchantScreen {
                     TradingPostScreen.this.refreshSearchResults();
                 }
                 return super.mouseClicked(mouseX, mouseY, button);
-            }
-
-            @Override
-            public void renderButton(MatrixStack poseStack, int mouseX, int mouseY, float partialTime) {
-                super.renderButton(poseStack, mouseX, mouseY, partialTime);
-                if (this.isVisible() && !this.isFocused() && this.getValue().isEmpty()) {
-                    drawString(poseStack, TradingPostScreen.this.font, SEARCH_COMPONENT, this.x, this.y, 16777215);
-                }
             }
         };
         this.searchBox.setMaxLength(50);
@@ -310,6 +304,9 @@ public class TradingPostScreen extends MerchantScreen {
 
         super.renderBg(matrixStack, partialTicks, mouseX, mouseY);
         this.renderSearchBox(matrixStack, partialTicks, mouseX, mouseY);
+        TextureAtlasSprite textureatlassprite = this.minecraft.getTextureAtlas(PlayerContainer.BLOCK_ATLAS).apply(TradingPostExtension.MAGNIFYING_GLASS_LOCATION);
+        this.minecraft.getTextureManager().bind(textureatlassprite.atlas().location());
+        blit(matrixStack, this.leftPos, this.topPos + 4, this.getBlitOffset(), 16, 16, textureatlassprite);
         this.minecraft.getTextureManager().bind(VILLAGER_LOCATION);
     }
 
@@ -317,7 +314,7 @@ public class TradingPostScreen extends MerchantScreen {
         this.minecraft.getTextureManager().bind(CREATIVE_INVENTORY_LOCATION);
         int i = (this.width - this.imageWidth) / 2;
         int j = (this.height - this.imageHeight) / 2;
-        blit(matrixStack, i + 4, j + 4, this.getBlitOffset(), 80.0F, 4.0F, 90, 12, 256, 256);
+        blit(matrixStack, i + 11, j + 4, this.getBlitOffset(), 80.0F, 4.0F, 90, 12, 256, 256);
         this.searchBox.render(matrixStack, mouseX, mouseY, partialTicks);
     }
 
@@ -390,7 +387,6 @@ public class TradingPostScreen extends MerchantScreen {
         }
 
         TradingPostOffers offers = (TradingPostOffers) this.getMenu().getOffers();
-        MerchantScreenAccessor accessor = (MerchantScreenAccessor) this;
         String search = this.searchBox.getValue();
         if (search.isEmpty()) {
 
@@ -401,10 +397,12 @@ public class TradingPostScreen extends MerchantScreen {
             offers.setFilter(isearchtree.search(search.toLowerCase(Locale.ROOT)));
         }
 
-        accessor.setScrollOff(0);
-        accessor.setShopItem(0);
-        this.getMenu().setSelectionHint(0);
+        ((MerchantScreenAccessor) this).setScrollOff(0);
+        ((MerchantScreenAccessor) this).setShopItem(0);
+        this.getMenu().setSelectionHint(-1);
         this.getMenu().getTraders().setActiveOffer(null);
+        this.getMenu().clearPaymentSlots();
+        PuzzlesLib.getNetworkHandlerV2().sendToServer(new C2SClearSlotsMessage());
     }
 
     @Override
