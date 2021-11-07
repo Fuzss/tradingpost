@@ -1,92 +1,83 @@
-package fuzs.tradingpost.inventory.container;
+package fuzs.tradingpost.world.inventory;
 
 import fuzs.tradingpost.TradingPost;
-import fuzs.tradingpost.block.TradingPostBlock;
-import fuzs.tradingpost.element.TradingPostElement;
-import fuzs.tradingpost.entity.merchant.LocalMerchant;
-import fuzs.tradingpost.entity.merchant.MerchantCollection;
-import fuzs.tradingpost.inventory.TradingPostInventory;
-import fuzs.tradingpost.mixin.accessor.MerchantContainerAccessor;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.merchant.IMerchant;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.MerchantInventory;
-import net.minecraft.inventory.container.ContainerType;
-import net.minecraft.inventory.container.MerchantContainer;
-import net.minecraft.inventory.container.MerchantResultSlot;
-import net.minecraft.inventory.container.Slot;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.MerchantOffers;
-import net.minecraft.util.IWorldPosCallable;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.text.ITextComponent;
+import fuzs.tradingpost.world.inventory.TradingPostContainer;
+import fuzs.tradingpost.world.level.block.TradingPostBlock;
+import fuzs.tradingpost.world.entity.npc.LocalMerchant;
+import fuzs.tradingpost.world.entity.npc.MerchantCollection;
+import fuzs.tradingpost.mixin.accessor.MerchantMenuAccessor;
+import fuzs.tradingpost.registry.ModRegistry;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.*;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.trading.Merchant;
+import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.Optional;
 
-public class TradingPostContainer extends MerchantContainer {
-
-    private final IWorldPosCallable access;
+public class TradingPostMenu extends MerchantMenu {
+    private final ContainerLevelAccess access;
     private final MerchantCollection traders;
-    private final MerchantInventory tradeContainer;
+    private final MerchantContainer tradeContainer;
 
     private int ticks;
     private boolean lockOffers;
 
-    public TradingPostContainer(int containerId, PlayerInventory playerInventory) {
+    public TradingPostMenu(int containerId, Inventory playerInventory) {
         super(containerId, playerInventory);
-        this.access = IWorldPosCallable.NULL;
+        this.access = ContainerLevelAccess.NULL;
         this.traders = new MerchantCollection(this.access, playerInventory.player.level);
-        ((MerchantContainerAccessor) this).setTrader(this.traders);
-        this.tradeContainer = new TradingPostInventory(this.traders);
-        ((MerchantContainerAccessor) this).setTradeContainer(this.tradeContainer);
+        ((MerchantMenuAccessor) this).setTrader(this.traders);
+        this.tradeContainer = new TradingPostContainer(this.traders);
+        ((MerchantMenuAccessor) this).setTradeContainer(this.tradeContainer);
         this.replaceSlot(0, new Slot(this.tradeContainer, 0, 136, 37));
         this.replaceSlot(1, new Slot(this.tradeContainer, 1, 162, 37));
         this.replaceSlot(2, new MerchantResultSlot(playerInventory.player, this.traders, this.tradeContainer, 2, 220, 37));
     }
 
-    public TradingPostContainer(int containerId, PlayerInventory playerInventory, MerchantCollection merchantCollection, IWorldPosCallable worldPosCallable) {
+    public TradingPostMenu(int containerId, Inventory playerInventory, MerchantCollection merchantCollection, ContainerLevelAccess worldPosCallable) {
         super(containerId, playerInventory, merchantCollection);
         this.access = worldPosCallable;
         this.traders = merchantCollection;
-        ((MerchantContainerAccessor) this).setTrader(this.traders);
-        this.tradeContainer = new TradingPostInventory(this.traders);
-        ((MerchantContainerAccessor) this).setTradeContainer(this.tradeContainer);
+        ((MerchantMenuAccessor) this).setTrader(this.traders);
+        this.tradeContainer = new TradingPostContainer(this.traders);
+        ((MerchantMenuAccessor) this).setTradeContainer(this.tradeContainer);
         this.replaceSlot(0, new Slot(this.tradeContainer, 0, 136, 37));
         this.replaceSlot(1, new Slot(this.tradeContainer, 1, 162, 37));
         this.replaceSlot(2, new MerchantResultSlot(playerInventory.player, this.traders, this.tradeContainer, 2, 220, 37));
     }
 
     private void replaceSlot(int index, Slot slot) {
-
         slot.index = index;
         this.slots.set(index, slot);
     }
 
     @Override
-    public ContainerType<?> getType() {
-
-        return TradingPostElement.TRADING_POST_CONTAINER;
+    public MenuType<?> getType() {
+        return ModRegistry.TRADING_POST_MENU_TYPE.get();
     }
 
     @Override
-    public boolean stillValid(PlayerEntity player) {
-        final TradingPostElement element = (TradingPostElement) TradingPost.TRADING_POST;
+    public boolean stillValid(Player player) {
         // this also updates merchants, so run independent of config option
         // don't want this to go off on every tick
-        Optional<Boolean> anyTrader = this.access.evaluate((level, pos) -> this.traders.updateAvailableMerchants(this.containerId, pos, player, element.enforceRange && ++this.ticks >= 20));
+        Optional<Boolean> anyTrader = this.access.evaluate((level, pos) -> this.traders.updateAvailableMerchants(this.containerId, pos, player, TradingPost.CONFIG.server().enforceRange && ++this.ticks >= 20));
         if (this.ticks >= 20) this.ticks = 0;
-        if (element.closeScreen && anyTrader.isPresent() && !anyTrader.get()) {
+        if (TradingPost.CONFIG.server().closeScreen && anyTrader.isPresent() && !anyTrader.get()) {
             player.displayClientMessage(TradingPostBlock.NO_MERCHANT_FOUND, false);
             return false;
         }
-        return stillValid(this.access, player, TradingPostElement.TRADING_POST_BLOCK);
+        return stillValid(this.access, player, ModRegistry.TRADING_POST_BLOCK.get());
     }
 
     @Override
-    public ItemStack quickMoveStack(PlayerEntity player, int slotIndex) {
+    public ItemStack quickMoveStack(Player player, int slotIndex) {
 
         ItemStack itemstack = ItemStack.EMPTY;
         Slot slot = this.slots.get(slotIndex);
@@ -129,14 +120,10 @@ public class TradingPostContainer extends MerchantContainer {
     }
 
     private void playTradeSound() {
-
         if (!this.traders.getLevel().isClientSide) {
-
-            IMerchant merchant = this.traders.getCurrentMerchant();
-            if (merchant instanceof Entity) {
-
-                Entity entity = (Entity) merchant;
-                this.traders.getLevel().playLocalSound(entity.getX(), entity.getY(), entity.getZ(), this.traders.getNotifyTradeSound(), SoundCategory.NEUTRAL, 1.0F, 1.0F, false);
+            Merchant merchant = this.traders.getCurrentMerchant();
+            if (merchant instanceof Entity entity) {
+                this.traders.getLevel().playLocalSound(entity.getX(), entity.getY(), entity.getZ(), this.traders.getNotifyTradeSound(), SoundSource.NEUTRAL, 1.0F, 1.0F, false);
             }
         }
     }
@@ -178,7 +165,7 @@ public class TradingPostContainer extends MerchantContainer {
         this.lockOffers = lock;
     }
 
-    public void addMerchant(PlayerEntity playerEntity, int merchantId, ITextComponent merchantTitle, MerchantOffers offers, int villagerLevel, int villagerXp, boolean showProgress, boolean canRestock) {
+    public void addMerchant(Player playerEntity, int merchantId, Component merchantTitle, MerchantOffers offers, int villagerLevel, int villagerXp, boolean showProgress, boolean canRestock) {
 
         LocalMerchant merchant = new LocalMerchant(playerEntity, merchantTitle, offers, villagerLevel, villagerXp, showProgress, canRestock);
         this.traders.addMerchant(merchantId, merchant);
@@ -207,7 +194,7 @@ public class TradingPostContainer extends MerchantContainer {
     @OnlyIn(Dist.CLIENT)
     @Override
     public void setShowProgressBar(boolean showProgressBar) {
-
+        // we don't raise an exception anywhere here as you never know what other mods are up to since this extends vanilla's merchant menu
         TradingPost.LOGGER.error("Set showProgressBar to merchants directly");
     }
 

@@ -1,18 +1,17 @@
 package fuzs.tradingpost.network.message;
 
-import fuzs.puzzleslib.network.v2.message.Message;
-import fuzs.tradingpost.inventory.container.TradingPostContainer;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.item.MerchantOffers;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.text.ITextComponent;
+import fuzs.puzzleslib.network.message.Message;
+import fuzs.tradingpost.world.inventory.TradingPostMenu;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.trading.MerchantOffers;
 
 public class S2CMerchantDataMessage implements Message {
-
     private int containerId;
     private int merchantId;
-    private ITextComponent merchantTitle;
+    private Component merchantTitle;
     private MerchantOffers offers;
     private int villagerLevel;
     private int villagerXp;
@@ -23,8 +22,7 @@ public class S2CMerchantDataMessage implements Message {
 
     }
 
-    public S2CMerchantDataMessage(int containerId, int merchantId, ITextComponent merchantTitle, MerchantOffers offers, int villagerLevel, int villagerXp, boolean showProgress, boolean canRestock) {
-
+    public S2CMerchantDataMessage(int containerId, int merchantId, Component merchantTitle, MerchantOffers offers, int villagerLevel, int villagerXp, boolean showProgress, boolean canRestock) {
         this.containerId = containerId;
         this.merchantId = merchantId;
         this.merchantTitle = merchantTitle;
@@ -36,8 +34,7 @@ public class S2CMerchantDataMessage implements Message {
     }
 
     @Override
-    public void write(PacketBuffer buf) {
-
+    public void write(FriendlyByteBuf buf) {
         buf.writeVarInt(this.containerId);
         buf.writeInt(this.merchantId);
         buf.writeComponent(this.merchantTitle);
@@ -49,8 +46,7 @@ public class S2CMerchantDataMessage implements Message {
     }
 
     @Override
-    public void read(PacketBuffer buf) {
-
+    public void read(FriendlyByteBuf buf) {
         this.containerId = buf.readVarInt();
         this.merchantId = buf.readInt();
         this.merchantTitle = buf.readComponent();
@@ -69,13 +65,11 @@ public class S2CMerchantDataMessage implements Message {
     private static class MerchantDataHandler extends PacketHandler<S2CMerchantDataMessage> {
 
         @Override
-        public void handle(S2CMerchantDataMessage packet, PlayerEntity player, Object gameInstance) {
-            Container container = player.containerMenu;
-            if (packet.containerId == container.containerId && container instanceof TradingPostContainer) {
-
-                ((TradingPostContainer) container).addMerchant(player, packet.merchantId, packet.merchantTitle, new MerchantOffers(packet.offers.createTag()), packet.villagerLevel, packet.villagerXp, packet.showProgress, packet.canRestock);
+        public void handle(S2CMerchantDataMessage packet, Player player, Object gameInstance) {
+            AbstractContainerMenu container = player.containerMenu;
+            if (packet.containerId == container.containerId && container instanceof TradingPostMenu) {
+                ((TradingPostMenu) container).addMerchant(player, packet.merchantId, packet.merchantTitle, new MerchantOffers(packet.offers.createTag()), packet.villagerLevel, packet.villagerXp, packet.showProgress, packet.canRestock);
             }
         }
     }
-
 }

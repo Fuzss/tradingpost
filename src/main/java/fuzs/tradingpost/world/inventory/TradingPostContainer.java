@@ -1,13 +1,12 @@
-package fuzs.tradingpost.inventory;
+package fuzs.tradingpost.world.inventory;
 
-import fuzs.tradingpost.entity.merchant.MerchantCollection;
-import net.minecraft.inventory.MerchantInventory;
+import fuzs.tradingpost.world.entity.npc.MerchantCollection;
+import net.minecraft.world.inventory.MerchantContainer;
 
-public class TradingPostInventory extends MerchantInventory {
-
+public class TradingPostContainer extends MerchantContainer {
     private final MerchantCollection merchant;
 
-    public TradingPostInventory(MerchantCollection merchant) {
+    public TradingPostContainer(MerchantCollection merchant) {
         super(merchant);
         this.merchant = merchant;
         this.setSelectionHint(-1);
@@ -20,5 +19,4 @@ public class TradingPostInventory extends MerchantInventory {
             this.merchant.setActiveOffer(this.getActiveOffer());
         }
     }
-
 }

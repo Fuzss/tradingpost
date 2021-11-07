@@ -1,22 +1,20 @@
-package fuzs.tradingpost.entity.merchant;
+package fuzs.tradingpost.world.entity.npc;
 
-import net.minecraft.entity.NPCMerchant;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.MerchantOffers;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.npc.ClientSideMerchant;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-public class LocalMerchant extends NPCMerchant {
-
-    private final ITextComponent merchantTitle;
+public class LocalMerchant extends ClientSideMerchant {
+    private final Component merchantTitle;
     private final int merchantLevel;
     private final boolean showProgressBar;
     private final boolean canRestock;
     
-    public LocalMerchant(PlayerEntity playerEntity, ITextComponent merchantTitle, MerchantOffers offers, int villagerLevel, int villagerXp, boolean showProgress, boolean canRestock) {
-        
+    public LocalMerchant(Player playerEntity, Component merchantTitle, MerchantOffers offers, int villagerLevel, int villagerXp, boolean showProgress, boolean canRestock) {
         super(playerEntity);
         this.merchantTitle = merchantTitle;
         this.overrideOffers(offers);
@@ -26,25 +24,21 @@ public class LocalMerchant extends NPCMerchant {
         this.canRestock = canRestock;
     }
 
-    public ITextComponent getDisplayName() {
-
+    public Component getDisplayName() {
         return this.merchantTitle;
     }
 
     public int getMerchantLevel() {
-
         return this.merchantLevel;
     }
 
     @Override
     public boolean canRestock() {
-
         return this.canRestock;
     }
 
     @Override
     public boolean showProgressBar() {
-
         return this.showProgressBar;
     }
 

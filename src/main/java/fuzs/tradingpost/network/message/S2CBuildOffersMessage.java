@@ -1,21 +1,20 @@
 package fuzs.tradingpost.network.message;
 
-import fuzs.puzzleslib.network.v2.message.Message;
-import fuzs.tradingpost.client.element.TradingPostExtension;
-import fuzs.tradingpost.client.gui.screen.inventory.TradingPostScreen;
-import fuzs.tradingpost.inventory.container.TradingPostContainer;
+import fuzs.puzzleslib.network.message.Message;
+import fuzs.tradingpost.client.TradingPostClient;
+import fuzs.tradingpost.client.gui.screens.inventory.TradingPostScreen;
+import fuzs.tradingpost.world.inventory.TradingPostMenu;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.util.IMutableSearchTree;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.item.MerchantOffer;
-import net.minecraft.item.MerchantOffers;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.client.searchtree.MutableSearchTree;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.item.trading.MerchantOffers;
 
 public class S2CBuildOffersMessage implements Message {
-
     private int containerId;
     private Int2IntOpenHashMap idToOfferCount;
 
@@ -24,34 +23,28 @@ public class S2CBuildOffersMessage implements Message {
     }
 
     public S2CBuildOffersMessage(int containerId, Int2IntOpenHashMap idToOfferCount) {
-
         this.containerId = containerId;
         this.idToOfferCount = idToOfferCount;
     }
 
     @Override
-    public void write(PacketBuffer buf) {
-
+    public void write(FriendlyByteBuf buf) {
         buf.writeVarInt(this.containerId);
         buf.writeVarInt(this.idToOfferCount.size());
         for (Int2IntMap.Entry entry : this.idToOfferCount.int2IntEntrySet()) {
-
             buf.writeInt(entry.getIntKey());
             buf.writeVarInt(entry.getIntValue());
         }
     }
 
     @Override
-    public void read(PacketBuffer buf) {
-
+    public void read(FriendlyByteBuf buf) {
         this.containerId = buf.readVarInt();
         final Int2IntOpenHashMap idToOfferCount = new Int2IntOpenHashMap();
         final int length = buf.readVarInt();
         for (int i = 0; i < length; i++) {
-
             idToOfferCount.put(buf.readInt(), buf.readVarInt());
         }
-
         this.idToOfferCount = idToOfferCount;
     }
 
@@ -63,25 +56,21 @@ public class S2CBuildOffersMessage implements Message {
     private static class BuildOffersHandler extends PacketHandler<S2CBuildOffersMessage> {
 
         @Override
-        public void handle(S2CBuildOffersMessage packet, PlayerEntity player, Object gameInstance) {
+        public void handle(S2CBuildOffersMessage packet, Player player, Object gameInstance) {
             Minecraft mc = Minecraft.getInstance();
-            Container container = player.containerMenu;
-            if (packet.containerId == container.containerId && container instanceof TradingPostContainer && mc.screen instanceof TradingPostScreen) {
-
-                ((TradingPostContainer) container).getTraders().buildOffers(packet.idToOfferCount);
-                this.buildSearchTree(mc, ((TradingPostContainer) container).getOffers());
+            AbstractContainerMenu container = player.containerMenu;
+            if (packet.containerId == container.containerId && container instanceof TradingPostMenu && mc.screen instanceof TradingPostScreen) {
+                ((TradingPostMenu) container).getTraders().buildOffers(packet.idToOfferCount);
+                this.buildSearchTree(mc, ((TradingPostMenu) container).getOffers());
                 ((TradingPostScreen) mc.screen).refreshSearchResults();
             }
         }
 
         private void buildSearchTree(Minecraft mc, MerchantOffers offers) {
-
-            IMutableSearchTree<MerchantOffer> imutablesearchtree = mc.getSearchTree(TradingPostExtension.OFFER_SEARCH_TREE);
+            MutableSearchTree<MerchantOffer> imutablesearchtree = mc.getSearchTree(TradingPostClient.OFFER_SEARCH_TREE);
             imutablesearchtree.clear();
             offers.forEach(imutablesearchtree::add);
             imutablesearchtree.refresh();
         }
-
     }
-
 }

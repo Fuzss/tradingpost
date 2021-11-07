@@ -1,52 +1,51 @@
-package fuzs.tradingpost.client.gui.screen.inventory;
+package fuzs.tradingpost.client.gui.screens.inventory;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
-import fuzs.puzzleslib.PuzzlesLib;
+import com.mojang.blaze3d.vertex.PoseStack;
 import fuzs.tradingpost.TradingPost;
-import fuzs.tradingpost.client.element.TradingPostExtension;
-import fuzs.tradingpost.inventory.container.TradingPostContainer;
-import fuzs.tradingpost.item.TradingPostOffers;
+import fuzs.tradingpost.client.TradingPostClient;
 import fuzs.tradingpost.mixin.client.accessor.ButtonAccessor;
 import fuzs.tradingpost.mixin.client.accessor.MerchantScreenAccessor;
-import fuzs.tradingpost.mixin.client.accessor.TradeButtonAccessor;
-import fuzs.tradingpost.network.message.C2SClearSlotsMessage;
+import fuzs.tradingpost.mixin.client.accessor.TradeOfferButtonAccessor;
+import fuzs.tradingpost.network.client.message.C2SClearSlotsMessage;
+import fuzs.tradingpost.world.inventory.TradingPostMenu;
+import fuzs.tradingpost.world.item.trading.TradingPostOffers;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.AbstractGui;
-import net.minecraft.client.gui.screen.inventory.MerchantScreen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.widget.Widget;
-import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Widget;
+import net.minecraft.client.gui.screens.inventory.MerchantScreen;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.util.ISearchTree;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.container.MerchantContainer;
-import net.minecraft.inventory.container.PlayerContainer;
-import net.minecraft.inventory.container.Slot;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.MerchantOffer;
-import net.minecraft.item.MerchantOffers;
-import net.minecraft.network.play.client.CSelectTradePacket;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.client.searchtree.SearchTree;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.protocol.game.ServerboundSelectTradePacket;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.inventory.MerchantMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.item.trading.MerchantOffers;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
 public class TradingPostScreen extends MerchantScreen {
-
     private static final ResourceLocation VILLAGER_LOCATION = new ResourceLocation("textures/gui/container/villager2.png");
     private static final ResourceLocation CREATIVE_INVENTORY_LOCATION = new ResourceLocation("textures/gui/container/creative_inventory/tab_item_search.png");
-    private static final ITextComponent DEPRECATED_TOOLTIP = new TranslationTextComponent("merchant.deprecated");
-    private static final ITextComponent MERCHANT_GONE = new TranslationTextComponent("trading_post.trader_gone");
+    private static final Component DEPRECATED_TOOLTIP = new TranslatableComponent("merchant.deprecated");
+    private static final Component MERCHANT_GONE = new TranslatableComponent("trading_post.trader_gone");
 
     private Button[] tradeOfferButtons = new Button[7];
-    private TextFieldWidget searchBox;
+    private EditBox searchBox;
     private boolean ignoreTextInput;
 
-    public TradingPostScreen(MerchantContainer container, PlayerInventory playerInventory, ITextComponent title) {
+    public TradingPostScreen(MerchantMenu container, Inventory playerInventory, Component title) {
 
         super(container, playerInventory, title);
     }
@@ -55,24 +54,24 @@ public class TradingPostScreen extends MerchantScreen {
     protected void init() {
 
         super.init();
-        this.tradeOfferButtons = this.getTradeOfferButtons(this.buttons);
+        this.tradeOfferButtons = this.getTradeOfferButtons(this.renderables);
         for (Button tradeOfferButton : this.tradeOfferButtons) {
 
             ((ButtonAccessor) tradeOfferButton).setOnPress(button -> {
 
                 MerchantScreenAccessor accessor = (MerchantScreenAccessor) this;
-                final int shopItem = ((TradeButtonAccessor) button).getIndex() + accessor.getScrollOff();
+                final int shopItem = ((TradeOfferButtonAccessor) button).getIndex() + accessor.getScrollOff();
                 MerchantOffers offers = this.getMenu().getOffers();
                 accessor.setShopItem(shopItem);
                 this.getMenu().setSelectionHint(shopItem);
                 this.getMenu().getTraders().setActiveOffer(offers.get(shopItem));
                 this.getMenu().tryMoveItems(shopItem);
                 // get real index when sending to server
-                this.minecraft.getConnection().send(new CSelectTradePacket(offers instanceof TradingPostOffers ? ((TradingPostOffers) offers).getOrigShopItem(shopItem) : shopItem));
+                this.minecraft.getConnection().send(new ServerboundSelectTradePacket(offers instanceof TradingPostOffers ? ((TradingPostOffers) offers).getOrigShopItem(shopItem) : shopItem));
             });
         }
 
-        this.searchBox = new TextFieldWidget(this.font, this.leftPos + 13, this.topPos + 6, 80, 9, new TranslationTextComponent("itemGroup.search")) {
+        this.searchBox = new EditBox(this.font, this.leftPos + 13, this.topPos + 6, 80, 9, new TranslatableComponent("itemGroup.search")) {
             @Override
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
                 // left click clears text
@@ -86,21 +85,17 @@ public class TradingPostScreen extends MerchantScreen {
         this.searchBox.setMaxLength(50);
         this.searchBox.setBordered(false);
         this.searchBox.setTextColor(16777215);
-        this.children.add(this.searchBox);
+        this.addWidget(this.searchBox);
     }
 
     private Button[] getTradeOfferButtons(List<Widget> buttons) {
-
         Button[] tradeOfferButtons = buttons.stream()
-                .filter(button -> button instanceof TradeButtonAccessor)
+                .filter(button -> button instanceof TradeOfferButtonAccessor)
                 .map(button -> (Button) button)
                 .toArray(Button[]::new);
-
         if (tradeOfferButtons.length != 7) {
-
             TradingPost.LOGGER.warn("Unable to find enough tradeOfferButtons");
         }
-
         return tradeOfferButtons;
     }
 
@@ -117,24 +112,23 @@ public class TradingPostScreen extends MerchantScreen {
     }
 
     @Override
-    protected void renderLabels(MatrixStack matrixStack, int mouseX, int mouseY) {
+    protected void renderLabels(PoseStack matrixStack, int mouseX, int mouseY) {
 
-        ITextComponent title = this.getMenu().getTraders().getDisplayName();
+        Component title = this.getMenu().getTraders().getDisplayName();
         if (title != null) {
             int traderLevel = this.menu.getTraderLevel();
             if (traderLevel > 0 && traderLevel <= 5 && this.menu.showProgressBar()) {
-                title = title.copy().append(" - ").append(new TranslationTextComponent("merchant.level." + traderLevel));
+                title = title.copy().append(" - ").append(new TranslatableComponent("merchant.level." + traderLevel));
             }
         } else {
             title = this.title;
         }
         this.font.draw(matrixStack, title, (float)(49 + this.imageWidth / 2 - this.font.width(title) / 2), 6.0F, 4210752);
-        this.font.draw(matrixStack, this.inventory.getDisplayName(), (float)this.inventoryLabelX, (float)this.inventoryLabelY, 4210752);
+        this.font.draw(matrixStack, this.playerInventoryTitle, (float)this.inventoryLabelX, (float)this.inventoryLabelY, 4210752);
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTime) {
+    public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTime) {
 
         MerchantOffers merchantoffers = this.getMenu().getOffers();
         this.setButtonsActive(merchantoffers);
@@ -155,9 +149,9 @@ public class TradingPostScreen extends MerchantScreen {
 
                 MerchantOffer merchantoffer = merchantoffers.get(shopItem);
                 if (merchantoffer.isOutOfStock()) {
-
-                    this.minecraft.getTextureManager().bind(VILLAGER_LOCATION);
-                    RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+                    RenderSystem.setShader(GameRenderer::getPositionTexShader);
+                    RenderSystem.setShaderTexture(0, VILLAGER_LOCATION);
+                    RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
                     blit(matrixStack, this.leftPos + 83 + 99, this.topPos + 35, this.getBlitOffset(), 311.0F, 0.0F, 28, 21, 256, 512);
                 }
             }
@@ -166,9 +160,8 @@ public class TradingPostScreen extends MerchantScreen {
             final int height = (this.height - this.imageHeight) / 2;
             int posX = width + 5;
             int posY = height + 16 + 2;
-            RenderSystem.pushMatrix();
-            RenderSystem.enableRescaleNormal();
-            this.minecraft.getTextureManager().bind(VILLAGER_LOCATION);
+            RenderSystem.setShader(GameRenderer::getPositionTexShader);
+            RenderSystem.setShaderTexture(0, VILLAGER_LOCATION);
             ((MerchantScreenAccessor) this).callRenderScroller(matrixStack, width, height, merchantoffers);
 
             for (int i = 0, merchantoffersSize = merchantoffers.size(); i < merchantoffersSize; i++) {
@@ -179,7 +172,7 @@ public class TradingPostScreen extends MerchantScreen {
                     ((MerchantScreenAccessor) this).callRenderButtonArrows(matrixStack, merchantoffer, width, posY + 1);
                     if (!this.getMenu().getTraders().checkOffer(merchantoffer)) {
 
-                        AbstractGui.fill(matrixStack, posX, posY, posX + 88, posY + 20, 822018048);
+                        GuiComponent.fill(matrixStack, posX, posY, posX + 88, posY + 20, 822018048);
                     }
 
                     ItemStack itemstack = merchantoffer.getBaseCostA();
@@ -199,7 +192,7 @@ public class TradingPostScreen extends MerchantScreen {
                     if (!this.getMenu().getTraders().checkOffer(merchantoffer)) {
 
                         RenderSystem.depthFunc(516);
-                        AbstractGui.fill(matrixStack, posX, posY, posX + 88, posY + 20, 822083583);
+                        GuiComponent.fill(matrixStack, posX, posY, posX + 88, posY + 20, 822083583);
                         RenderSystem.depthFunc(515);
                     }
 
@@ -210,7 +203,8 @@ public class TradingPostScreen extends MerchantScreen {
 
                         this.itemRenderer.renderGuiItemDecorations(this.font, itemstack, posX + 5, posY + 1, itemstack.getCount() == 1 ? "1" : null);
                         this.itemRenderer.renderGuiItemDecorations(this.font, itemstack1, posX + 5 + 14, posY + 1, itemstack1.getCount() == 1 ? "1" : null);
-                        this.minecraft.getTextureManager().bind(VILLAGER_LOCATION);
+                        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+                        RenderSystem.setShaderTexture(0, VILLAGER_LOCATION);
                         this.setBlitOffset(this.getBlitOffset() + 300);
                         blit(matrixStack, posX + 5 + 7, posY + 1 + 12, this.getBlitOffset(), 0.0F, 176.0F, 9, 2, 256, 512);
                         this.setBlitOffset(this.getBlitOffset() - 300);
@@ -255,8 +249,6 @@ public class TradingPostScreen extends MerchantScreen {
                     posY += 20;
                 }
             }
-
-            RenderSystem.popMatrix();
             RenderSystem.enableDepthTest();
         }
 
@@ -300,18 +292,20 @@ public class TradingPostScreen extends MerchantScreen {
     }
 
     @Override
-    protected void renderBg(MatrixStack matrixStack, float partialTicks, int mouseX, int mouseY) {
-
+    protected void renderBg(PoseStack matrixStack, float partialTicks, int mouseX, int mouseY) {
         super.renderBg(matrixStack, partialTicks, mouseX, mouseY);
         this.renderSearchBox(matrixStack, partialTicks, mouseX, mouseY);
-        TextureAtlasSprite textureatlassprite = this.minecraft.getTextureAtlas(PlayerContainer.BLOCK_ATLAS).apply(TradingPostExtension.MAGNIFYING_GLASS_LOCATION);
-        this.minecraft.getTextureManager().bind(textureatlassprite.atlas().location());
+        TextureAtlasSprite textureatlassprite = this.minecraft.getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(TradingPostClient.MAGNIFYING_GLASS_LOCATION);
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderTexture(0, textureatlassprite.atlas().location());
         blit(matrixStack, this.leftPos, this.topPos + 4, this.getBlitOffset(), 16, 16, textureatlassprite);
-        this.minecraft.getTextureManager().bind(VILLAGER_LOCATION);
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderTexture(0, VILLAGER_LOCATION);
     }
 
-    private void renderSearchBox(MatrixStack matrixStack, float partialTicks, int mouseX, int mouseY) {
-        this.minecraft.getTextureManager().bind(CREATIVE_INVENTORY_LOCATION);
+    private void renderSearchBox(PoseStack matrixStack, float partialTicks, int mouseX, int mouseY) {
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderTexture(0, CREATIVE_INVENTORY_LOCATION);
         int i = (this.width - this.imageWidth) / 2;
         int j = (this.height - this.imageHeight) / 2;
         blit(matrixStack, i + 11, j + 4, this.getBlitOffset(), 80.0F, 4.0F, 90, 12, 256, 256);
@@ -320,25 +314,19 @@ public class TradingPostScreen extends MerchantScreen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseKey) {
-
         if (this.searchBox.mouseClicked(mouseX, mouseY, mouseKey)) {
-
             return true;
         }
-
         return super.mouseClicked(mouseX, mouseY, mouseKey);
     }
 
     @Override
-    public void tick() {
-
-        super.tick();
+    protected void containerTick() {
         this.searchBox.tick();
     }
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifierKeys) {
-
         this.ignoreTextInput = false;
         final String lastSearch = this.searchBox.getValue();
         if (this.searchBox.keyPressed(keyCode, scanCode, modifierKeys)) {
@@ -350,15 +338,12 @@ public class TradingPostScreen extends MerchantScreen {
 
             return true;
         } else if (this.searchBox.isFocused() && this.searchBox.isVisible() && keyCode != 256) {
-
             return true;
         } else if (this.minecraft.options.keyChat.matches(keyCode, scanCode) && !this.searchBox.isFocused()) {
-
             this.ignoreTextInput = true;
             this.searchBox.setFocus(true);
             return true;
         }
-
         return super.keyPressed(keyCode, scanCode, modifierKeys);
     }
 
@@ -381,34 +366,28 @@ public class TradingPostScreen extends MerchantScreen {
 
     public void refreshSearchResults() {
 
-        if (!(this.getMenu().getOffers() instanceof TradingPostOffers)) {
-
+        if (!(this.getMenu().getOffers() instanceof TradingPostOffers offers)) {
             return;
         }
-
-        TradingPostOffers offers = (TradingPostOffers) this.getMenu().getOffers();
-        String search = this.searchBox.getValue();
-        if (search.isEmpty()) {
-
+        String query = this.searchBox.getValue();
+        if (query.isEmpty()) {
             offers.clearFilter();
         } else {
-
-            ISearchTree<MerchantOffer> isearchtree = this.minecraft.getSearchTree(TradingPostExtension.OFFER_SEARCH_TREE);
-            offers.setFilter(isearchtree.search(search.toLowerCase(Locale.ROOT)));
+            SearchTree<MerchantOffer> isearchtree = this.minecraft.getSearchTree(TradingPostClient.OFFER_SEARCH_TREE);
+            offers.setFilter(isearchtree.search(query.toLowerCase(Locale.ROOT)));
         }
-
         ((MerchantScreenAccessor) this).setScrollOff(0);
         ((MerchantScreenAccessor) this).setShopItem(0);
         this.getMenu().setSelectionHint(-1);
         this.getMenu().getTraders().setActiveOffer(null);
         this.getMenu().clearPaymentSlots();
-        PuzzlesLib.getNetworkHandlerV2().sendToServer(new C2SClearSlotsMessage());
+        TradingPost.NETWORK.sendToServer(new C2SClearSlotsMessage());
     }
 
     @Override
-    public TradingPostContainer getMenu() {
+    public TradingPostMenu getMenu() {
         
-        return (TradingPostContainer) super.getMenu();
+        return (TradingPostMenu) super.getMenu();
     }
 
 }

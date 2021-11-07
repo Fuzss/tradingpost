@@ -1,10 +1,9 @@
 package fuzs.tradingpost.mixin.client.accessor;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.gui.screen.inventory.MerchantScreen;
-import net.minecraft.item.MerchantOffer;
-import net.minecraft.item.MerchantOffers;
-import net.minecraft.util.text.ITextComponent;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.screens.inventory.MerchantScreen;
+import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.item.trading.MerchantOffers;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
@@ -25,12 +24,11 @@ public interface MerchantScreenAccessor {
     void setScrollOff(int scrollOff);
 
     @Invoker
-    void callRenderScroller(MatrixStack matrixStack, int width, int height, MerchantOffers offers);
+    void callRenderScroller(PoseStack matrixStack, int width, int height, MerchantOffers offers);
 
     @Invoker
-    void callRenderButtonArrows(MatrixStack matrixStack, MerchantOffer offer, int width, int height);
+    void callRenderButtonArrows(PoseStack matrixStack, MerchantOffer offer, int width, int height);
 
     @Invoker
-    void callRenderProgressBar(MatrixStack matrixStack, int width, int height, MerchantOffer activeOffer);
-
+    void callRenderProgressBar(PoseStack matrixStack, int width, int height, MerchantOffer activeOffer);
 }
