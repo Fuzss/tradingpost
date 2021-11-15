@@ -3,6 +3,7 @@ package fuzs.tradingpost;
 import fuzs.puzzleslib.config.AbstractConfig;
 import fuzs.puzzleslib.config.ConfigHolder;
 import fuzs.puzzleslib.config.ConfigHolderImpl;
+import fuzs.puzzleslib.network.MessageDirection;
 import fuzs.puzzleslib.network.NetworkHandler;
 import fuzs.puzzleslib.registry.FuelManager;
 import fuzs.tradingpost.config.ServerConfig;
@@ -15,7 +16,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLConstructModEvent;
-import net.minecraftforge.fmllegacy.network.NetworkDirection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -43,9 +43,9 @@ public class TradingPost {
     }
     
     private static void registerMessages() {
-        NETWORK.register(S2CMerchantDataMessage.class, S2CMerchantDataMessage::new, NetworkDirection.PLAY_TO_CLIENT);
-        NETWORK.register(S2CRemoveMerchantsMessage.class, S2CRemoveMerchantsMessage::new, NetworkDirection.PLAY_TO_CLIENT);
-        NETWORK.register(S2CBuildOffersMessage.class, S2CBuildOffersMessage::new, NetworkDirection.PLAY_TO_CLIENT);
-        NETWORK.register(C2SClearSlotsMessage.class, C2SClearSlotsMessage::new, NetworkDirection.PLAY_TO_SERVER);
+        NETWORK.register(S2CMerchantDataMessage.class, S2CMerchantDataMessage::new, MessageDirection.TO_CLIENT);
+        NETWORK.register(S2CRemoveMerchantsMessage.class, S2CRemoveMerchantsMessage::new, MessageDirection.TO_CLIENT);
+        NETWORK.register(S2CBuildOffersMessage.class, S2CBuildOffersMessage::new, MessageDirection.TO_CLIENT);
+        NETWORK.register(C2SClearSlotsMessage.class, C2SClearSlotsMessage::new, MessageDirection.TO_SERVER);
     }
 }
