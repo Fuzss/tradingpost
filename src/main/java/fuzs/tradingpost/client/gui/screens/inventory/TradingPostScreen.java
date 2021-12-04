@@ -152,7 +152,7 @@ public class TradingPostScreen extends MerchantScreen {
                     RenderSystem.setShader(GameRenderer::getPositionTexShader);
                     RenderSystem.setShaderTexture(0, VILLAGER_LOCATION);
                     RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-                    blit(matrixStack, this.leftPos + 83 + 99, this.topPos + 35, this.getBlitOffset(), 311.0F, 0.0F, 28, 21, 256, 512);
+                    blit(matrixStack, this.leftPos + 83 + 99, this.topPos + 35, this.getBlitOffset(), 311.0F, 0.0F, 28, 21, 512, 256);
                 }
             }
 
@@ -206,7 +206,7 @@ public class TradingPostScreen extends MerchantScreen {
                         RenderSystem.setShader(GameRenderer::getPositionTexShader);
                         RenderSystem.setShaderTexture(0, VILLAGER_LOCATION);
                         this.setBlitOffset(this.getBlitOffset() + 300);
-                        blit(matrixStack, posX + 5 + 7, posY + 1 + 12, this.getBlitOffset(), 0.0F, 176.0F, 9, 2, 256, 512);
+                        blit(matrixStack, posX + 5 + 7, posY + 1 + 12, this.getBlitOffset(), 0.0F, 176.0F, 9, 2, 512, 256);
                         this.setBlitOffset(this.getBlitOffset() - 300);
                     }
 
@@ -257,7 +257,7 @@ public class TradingPostScreen extends MerchantScreen {
         for (int i = 0, offerButtonsLength = offerButtons.length; i < offerButtonsLength; i++) {
 
             Button button = offerButtons[i];
-            if (button.active && button.isHovered()) {
+            if (button.active && button.isHoveredOrFocused()) {
 
                 button.renderToolTip(matrixStack, mouseX, mouseY);
             }

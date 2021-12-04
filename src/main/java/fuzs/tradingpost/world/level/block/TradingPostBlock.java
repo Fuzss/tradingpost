@@ -1,10 +1,10 @@
 package fuzs.tradingpost.world.level.block;
 
 import fuzs.tradingpost.TradingPost;
-import fuzs.tradingpost.world.entity.npc.MerchantCollection;
-import fuzs.tradingpost.world.inventory.TradingPostMenu;
 import fuzs.tradingpost.mixin.accessor.VillagerAccessor;
 import fuzs.tradingpost.registry.ModRegistry;
+import fuzs.tradingpost.world.entity.npc.MerchantCollection;
+import fuzs.tradingpost.world.inventory.TradingPostMenu;
 import fuzs.tradingpost.world.level.block.entity.TradingPostBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -84,7 +84,7 @@ public class TradingPostBlock extends BaseEntityBlock implements SimpleWaterlogg
     @Override
     public BlockState updateShape(BlockState state, Direction direction, BlockState oldState, LevelAccessor level, BlockPos newPos, BlockPos oldPos) {
         if (state.getValue(WATERLOGGED)) {
-            level.getLiquidTicks().scheduleTick(newPos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
+            level.scheduleTick(newPos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
         }
         return super.updateShape(state, direction, oldState, level, newPos, oldPos);
     }
@@ -122,7 +122,7 @@ public class TradingPostBlock extends BaseEntityBlock implements SimpleWaterlogg
             List<Entity> nearbyTraders = level.getEntitiesOfClass(Entity.class, new AABB(blockCenterPos.add(-horizontalRange, -verticalRange, -horizontalRange), blockCenterPos.add(horizontalRange, verticalRange, horizontalRange)), this::canTrade);
             if (!nearbyTraders.isEmpty()) {
                 ContainerLevelAccess access = ContainerLevelAccess.create(level, pos);
-                MerchantCollection merchants = new MerchantCollection(access, level);
+                MerchantCollection merchants = new MerchantCollection(access);
                 for (Entity merchant : nearbyTraders) {
                     if (merchant instanceof Villager) {
                         ((VillagerAccessor) merchant).callUpdateSpecialPrices(player);

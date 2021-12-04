@@ -42,15 +42,17 @@ public class MerchantCollection implements Merchant {
     private final Int2ObjectOpenHashMap<Merchant> idToMerchant = new Int2ObjectOpenHashMap<>();
     private final Set<MerchantOffer> disabledOffers = Sets.newHashSet();
     private final ContainerLevelAccess access;
-    private final Level level;
 
     private MerchantOffers allOffers = new MerchantOffers();
     private Object2ObjectOpenHashMap<MerchantOffer, Merchant> offerToMerchant;
     private Merchant currentMerchant;
 
-    public MerchantCollection(ContainerLevelAccess access, Level level) {
+    public MerchantCollection() {
+        this(ContainerLevelAccess.NULL);
+    }
+
+    public MerchantCollection(ContainerLevelAccess access) {
         this.access = access;
-        this.level = level;
     }
 
     public void addMerchant(int entityId, Merchant merchant) {
@@ -96,7 +98,7 @@ public class MerchantCollection implements Merchant {
 
             this.currentMerchant.notifyTrade(offer);
 
-            if (!TradingPost.CONFIG.server().teleportXp) {
+            if (!TradingPost.CONFIG.server().teleportXp || this.isClientSide()) {
 
                 return;
             }
@@ -104,14 +106,14 @@ public class MerchantCollection implements Merchant {
             // reward xp is spawned at trader location, find it and move to trading post
             this.access.execute((level, pos) -> {
 
-                if (this.currentMerchant instanceof Entity) {
+                if (this.currentMerchant instanceof Entity entity) {
 
-                    Vec3 merchantPos = ((Entity) this.currentMerchant).position().add(0.0, 0.5, 0.0);
+                    Vec3 merchantPos = entity.position().add(0.0, 0.5, 0.0);
                     final double xpWidth = 0.5, xpHeight = 0.5;
-                    List<ExperienceOrb> xpRewards = this.getLevel().getEntitiesOfClass(ExperienceOrb.class, new AABB(merchantPos.add(-xpWidth, -xpHeight, -xpWidth), merchantPos.add(xpWidth, xpHeight, xpWidth)), Entity::isAlive);
+                    List<ExperienceOrb> xpRewards = level.getEntitiesOfClass(ExperienceOrb.class, new AABB(merchantPos.add(-xpWidth, -xpHeight, -xpWidth), merchantPos.add(xpWidth, xpHeight, xpWidth)), Entity::isAlive);
                     // move xp would be much nicer, unfortunately it'd only be moved on the server, so orbs need to be removed and spawned in again
                     for (ExperienceOrb xpOrb : xpRewards) {
-                        this.level.addFreshEntity(new ExperienceOrb(xpOrb.level, pos.getX(), pos.getY() + 1.5, pos.getZ(), xpOrb.getValue()));
+                        level.addFreshEntity(new ExperienceOrb(level, pos.getX(), pos.getY() + 1.5, pos.getZ(), xpOrb.getValue()));
                         xpOrb.discard();
                     }
                 }
@@ -127,9 +129,8 @@ public class MerchantCollection implements Merchant {
     }
 
     @Override
-    public Level getLevel() {
-        // only here for compatibility with mods and for use in MerchantContainer::remove
-        return this.level;
+    public boolean isClientSide() {
+        return this.access == ContainerLevelAccess.NULL;
     }
 
     @Override

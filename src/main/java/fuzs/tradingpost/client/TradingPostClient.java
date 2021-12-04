@@ -39,7 +39,7 @@ public class TradingPostClient {
 
     @SubscribeEvent
     public static void onTextureStitch(final TextureStitchEvent.Pre evt) {
-        if (evt.getMap().location().equals(InventoryMenu.BLOCK_ATLAS)) {
+        if (evt.getAtlas().location().equals(InventoryMenu.BLOCK_ATLAS)) {
             evt.addSprite(MAGNIFYING_GLASS_LOCATION);
         }
     }
