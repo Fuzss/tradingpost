@@ -8,7 +8,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.trading.MerchantOffers;
 
-public class S2CMerchantDataMessage implements Message {
+public class S2CMerchantDataMessage implements Message<S2CMerchantDataMessage> {
     private int containerId;
     private int merchantId;
     private Component merchantTitle;
@@ -58,7 +58,7 @@ public class S2CMerchantDataMessage implements Message {
     }
 
     @Override
-    public MerchantDataHandler makeHandler() {
+    public PacketHandler<S2CMerchantDataMessage> makeHandler() {
         return new MerchantDataHandler();
     }
 

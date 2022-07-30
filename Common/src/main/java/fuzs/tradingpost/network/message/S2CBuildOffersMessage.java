@@ -10,7 +10,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 
-public class S2CBuildOffersMessage implements Message {
+public class S2CBuildOffersMessage implements Message<S2CBuildOffersMessage> {
     private int containerId;
     private Int2IntOpenHashMap idToOfferCount;
 
@@ -45,7 +45,7 @@ public class S2CBuildOffersMessage implements Message {
     }
 
     @Override
-    public BuildOffersHandler makeHandler() {
+    public PacketHandler<S2CBuildOffersMessage> makeHandler() {
         return new BuildOffersHandler();
     }
 

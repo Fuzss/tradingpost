@@ -54,7 +54,7 @@ public class TradingPostScreen extends MerchantScreen {
     @Override
     protected void init() {
         super.init();
-        this.tradeOfferButtons = this.getTradeOfferButtons(ClientCoreServices.FACTORIES.screens().getRenderableButtons(this));
+        this.tradeOfferButtons = this.getTradeOfferButtons(ClientCoreServices.SCREENS.getRenderableButtons(this));
         for (Button tradeOfferButton : this.tradeOfferButtons) {
 
             ((ButtonAccessor) tradeOfferButton).setOnPress(button -> {

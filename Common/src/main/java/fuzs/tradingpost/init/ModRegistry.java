@@ -1,9 +1,9 @@
 package fuzs.tradingpost.init;
 
 import fuzs.puzzleslib.core.CoreServices;
-import fuzs.puzzleslib.registry.RegistryManager;
-import fuzs.puzzleslib.registry.RegistryReference;
-import fuzs.puzzleslib.registry.builder.ModBlockEntityTypeBuilder;
+import fuzs.puzzleslib.init.RegistryManager;
+import fuzs.puzzleslib.init.RegistryReference;
+import fuzs.puzzleslib.init.builder.ModBlockEntityTypeBuilder;
 import fuzs.tradingpost.TradingPost;
 import fuzs.tradingpost.world.inventory.TradingPostMenu;
 import fuzs.tradingpost.world.level.block.TradingPostBlock;
