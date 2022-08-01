@@ -22,9 +22,9 @@ public class ServerConfig implements ConfigCore {
     public boolean enforceRange = false;
     @Config(description = "Teleport xp from trading from villagers on top of the trading post.")
     public boolean teleportXp = true;
-    @Config(name = "Close Empty Screen", description = "Close trading post interface when all traders have become unavailable.")
+    @Config(name = "close_empty_screen", description = "Close trading post interface when all traders have become unavailable.")
     public boolean closeScreen = true;
-    @Config(name = "Trader Blacklist", description = {"Trader entities disabled from being found by the trading post.", "Modders may add their own incompatible trader entities via the \"" + TradingPost.MOD_ID + ":blacklisted_traders\" entity tag.", EntryCollectionBuilder.CONFIG_DESCRIPTION})
+    @Config(name = "trader_blacklist", description = {"Trader entities disabled from being found by the trading post.", "Modders may add their own incompatible trader entities via the \"" + TradingPost.MOD_ID + ":blacklisted_traders\" entity tag.", EntryCollectionBuilder.CONFIG_DESCRIPTION})
     List<String> traderBlacklistRaw = Lists.newArrayList();
 
     public Set<EntityType<?>> traderBlacklist;
