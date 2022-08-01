@@ -6,7 +6,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 
-public class C2SClearSlotsMessage implements Message<C2SClearSlotsMessage> {
+public class C2SClearSlotsMessage implements Message {
 
     @Override
     public void write(FriendlyByteBuf buf) {
@@ -19,7 +19,7 @@ public class C2SClearSlotsMessage implements Message<C2SClearSlotsMessage> {
     }
 
     @Override
-    public PacketHandler<C2SClearSlotsMessage> makeHandler() {
+    public ClearSlotsHandler makeHandler() {
         return new ClearSlotsHandler();
     }
 

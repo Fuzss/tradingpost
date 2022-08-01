@@ -1,16 +1,16 @@
 package fuzs.tradingpost;
 
-import fuzs.puzzleslib.config.ConfigHolder;
+import fuzs.puzzleslib.config.ConfigHolderV2;
 import fuzs.puzzleslib.core.CoreServices;
 import fuzs.puzzleslib.core.ModConstructor;
 import fuzs.puzzleslib.network.MessageDirection;
 import fuzs.puzzleslib.network.NetworkHandler;
 import fuzs.tradingpost.config.ServerConfig;
-import fuzs.tradingpost.init.ModRegistry;
 import fuzs.tradingpost.network.client.message.C2SClearSlotsMessage;
 import fuzs.tradingpost.network.message.S2CBuildOffersMessage;
 import fuzs.tradingpost.network.message.S2CMerchantDataMessage;
 import fuzs.tradingpost.network.message.S2CRemoveMerchantsMessage;
+import fuzs.tradingpost.init.ModRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,9 +21,8 @@ public class TradingPost implements ModConstructor {
 
     public static final NetworkHandler NETWORK = CoreServices.FACTORIES.network(MOD_ID);
     @SuppressWarnings("Convert2MethodRef")
-    public static final ConfigHolder CONFIG = CoreServices.FACTORIES.serverConfig(ServerConfig.class, () -> new ServerConfig());
+    public static final ConfigHolderV2 CONFIG = CoreServices.FACTORIES.server(ServerConfig.class, () -> new ServerConfig());
 
-    @Override
     public void onConstructMod() {
         CONFIG.bakeConfigs(MOD_ID);
         ModRegistry.touch();

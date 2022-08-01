@@ -8,7 +8,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 
-public class S2CRemoveMerchantsMessage implements Message<S2CRemoveMerchantsMessage> {
+public class S2CRemoveMerchantsMessage implements Message {
     private int containerId;
     private IntSet merchantIds;
 
@@ -42,7 +42,7 @@ public class S2CRemoveMerchantsMessage implements Message<S2CRemoveMerchantsMess
     }
 
     @Override
-    public PacketHandler<S2CRemoveMerchantsMessage> makeHandler() {
+    public RemoveMerchantHandler makeHandler() {
         return new RemoveMerchantHandler();
     }
 
