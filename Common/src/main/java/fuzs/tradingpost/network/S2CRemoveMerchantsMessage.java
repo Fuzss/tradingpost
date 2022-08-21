@@ -1,6 +1,6 @@
-package fuzs.tradingpost.network.message;
+package fuzs.tradingpost.network;
 
-import fuzs.puzzleslib.network.message.Message;
+import fuzs.puzzleslib.network.Message;
 import fuzs.tradingpost.world.inventory.TradingPostMenu;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -42,20 +42,18 @@ public class S2CRemoveMerchantsMessage implements Message<S2CRemoveMerchantsMess
     }
 
     @Override
-    public PacketHandler<S2CRemoveMerchantsMessage> makeHandler() {
-        return new RemoveMerchantHandler();
-    }
+    public MessageHandler<S2CRemoveMerchantsMessage> makeHandler() {
+        return new MessageHandler<>() {
 
-    private static class RemoveMerchantHandler extends PacketHandler<S2CRemoveMerchantsMessage> {
-
-        @Override
-        public void handle(S2CRemoveMerchantsMessage packet, Player player, Object gameInstance) {
-            AbstractContainerMenu container = player.containerMenu;
-            if (packet.containerId == container.containerId && container instanceof TradingPostMenu) {
-                for (int merchantId : packet.merchantIds) {
-                    ((TradingPostMenu) container).getTraders().removeMerchant(merchantId);
+            @Override
+            public void handle(S2CRemoveMerchantsMessage packet, Player player, Object gameInstance) {
+                AbstractContainerMenu container = player.containerMenu;
+                if (packet.containerId == container.containerId && container instanceof TradingPostMenu) {
+                    for (int merchantId : packet.merchantIds) {
+                        ((TradingPostMenu) container).getTraders().removeMerchant(merchantId);
+                    }
                 }
             }
-        }
+        };
     }
 }

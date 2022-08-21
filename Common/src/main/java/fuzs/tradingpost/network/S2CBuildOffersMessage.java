@@ -1,6 +1,6 @@
-package fuzs.tradingpost.network.message;
+package fuzs.tradingpost.network;
 
-import fuzs.puzzleslib.network.message.Message;
+import fuzs.puzzleslib.network.Message;
 import fuzs.tradingpost.client.TradingPostClient;
 import fuzs.tradingpost.client.gui.screens.inventory.TradingPostScreen;
 import fuzs.tradingpost.world.inventory.TradingPostMenu;
@@ -45,20 +45,18 @@ public class S2CBuildOffersMessage implements Message<S2CBuildOffersMessage> {
     }
 
     @Override
-    public PacketHandler<S2CBuildOffersMessage> makeHandler() {
-        return new BuildOffersHandler();
-    }
+    public MessageHandler<S2CBuildOffersMessage> makeHandler() {
+        return new MessageHandler<>() {
 
-    private static class BuildOffersHandler extends PacketHandler<S2CBuildOffersMessage> {
-
-        @Override
-        public void handle(S2CBuildOffersMessage packet, Player player, Object gameInstance) {
-            Minecraft minecraft = (Minecraft) gameInstance;
-            if (packet.containerId == player.containerMenu.containerId && player.containerMenu instanceof TradingPostMenu playerMenu && minecraft.screen instanceof TradingPostScreen screen) {
-                playerMenu.getTraders().buildOffers(packet.idToOfferCount);
-                minecraft.populateSearchTree(TradingPostClient.OFFER_SEARCH_TREE, playerMenu.getOffers());
-                screen.refreshSearchResults();
+            @Override
+            public void handle(S2CBuildOffersMessage message, Player player, Object gameInstance) {
+                Minecraft minecraft = (Minecraft) gameInstance;
+                if (message.containerId == player.containerMenu.containerId && player.containerMenu instanceof TradingPostMenu playerMenu && minecraft.screen instanceof TradingPostScreen screen) {
+                    playerMenu.getTraders().buildOffers(message.idToOfferCount);
+                    minecraft.populateSearchTree(TradingPostClient.OFFER_SEARCH_TREE, playerMenu.getOffers());
+                    screen.refreshSearchResults();
+                }
             }
-        }
+        };
     }
 }

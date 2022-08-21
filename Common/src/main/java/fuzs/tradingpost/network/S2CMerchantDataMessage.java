@@ -1,6 +1,6 @@
-package fuzs.tradingpost.network.message;
+package fuzs.tradingpost.network;
 
-import fuzs.puzzleslib.network.message.Message;
+import fuzs.puzzleslib.network.Message;
 import fuzs.tradingpost.world.inventory.TradingPostMenu;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -58,18 +58,16 @@ public class S2CMerchantDataMessage implements Message<S2CMerchantDataMessage> {
     }
 
     @Override
-    public PacketHandler<S2CMerchantDataMessage> makeHandler() {
-        return new MerchantDataHandler();
-    }
+    public MessageHandler<S2CMerchantDataMessage> makeHandler() {
+        return new MessageHandler<>() {
 
-    private static class MerchantDataHandler extends PacketHandler<S2CMerchantDataMessage> {
-
-        @Override
-        public void handle(S2CMerchantDataMessage packet, Player player, Object gameInstance) {
-            AbstractContainerMenu container = player.containerMenu;
-            if (packet.containerId == container.containerId && container instanceof TradingPostMenu) {
-                ((TradingPostMenu) container).addMerchant(player, packet.merchantId, packet.merchantTitle, new MerchantOffers(packet.offers.createTag()), packet.villagerLevel, packet.villagerXp, packet.showProgress, packet.canRestock);
+            @Override
+            public void handle(S2CMerchantDataMessage packet, Player player, Object gameInstance) {
+                AbstractContainerMenu container = player.containerMenu;
+                if (packet.containerId == container.containerId && container instanceof TradingPostMenu) {
+                    ((TradingPostMenu) container).addMerchant(player, packet.merchantId, packet.merchantTitle, new MerchantOffers(packet.offers.createTag()), packet.villagerLevel, packet.villagerXp, packet.showProgress, packet.canRestock);
+                }
             }
-        }
+        };
     }
 }

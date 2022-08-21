@@ -8,7 +8,7 @@ import fuzs.tradingpost.client.TradingPostClient;
 import fuzs.tradingpost.mixin.client.accessor.ButtonAccessor;
 import fuzs.tradingpost.mixin.client.accessor.MerchantScreenAccessor;
 import fuzs.tradingpost.mixin.client.accessor.TradeOfferButtonAccessor;
-import fuzs.tradingpost.network.client.message.C2SClearSlotsMessage;
+import fuzs.tradingpost.network.client.C2SClearSlotsMessage;
 import fuzs.tradingpost.world.inventory.TradingPostMenu;
 import fuzs.tradingpost.world.item.trading.TradingPostOffers;
 import net.minecraft.client.Minecraft;

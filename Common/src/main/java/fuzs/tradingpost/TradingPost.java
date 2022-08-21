@@ -7,10 +7,10 @@ import fuzs.puzzleslib.network.MessageDirection;
 import fuzs.puzzleslib.network.NetworkHandler;
 import fuzs.tradingpost.config.ServerConfig;
 import fuzs.tradingpost.init.ModRegistry;
-import fuzs.tradingpost.network.client.message.C2SClearSlotsMessage;
-import fuzs.tradingpost.network.message.S2CBuildOffersMessage;
-import fuzs.tradingpost.network.message.S2CMerchantDataMessage;
-import fuzs.tradingpost.network.message.S2CRemoveMerchantsMessage;
+import fuzs.tradingpost.network.client.C2SClearSlotsMessage;
+import fuzs.tradingpost.network.S2CBuildOffersMessage;
+import fuzs.tradingpost.network.S2CMerchantDataMessage;
+import fuzs.tradingpost.network.S2CRemoveMerchantsMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

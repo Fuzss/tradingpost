@@ -34,7 +34,7 @@ public class TradingPostClient implements ClientModConstructor {
     }
 
     @Override
-    public void onRegisterSearchTress(SearchRegistryContext context) {
+    public void onRegisterSearchTrees(SearchRegistryContext context) {
         context.registerSearchTree(OFFER_SEARCH_TREE, base -> new FullTextSearchTree<>(offer ->
                 Stream.of(offer.getBaseCostA(), offer.getCostB(), offer.getResult())
                         .filter(itemStack -> !itemStack.isEmpty())
