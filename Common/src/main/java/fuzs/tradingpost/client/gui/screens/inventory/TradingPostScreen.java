@@ -2,9 +2,7 @@ package fuzs.tradingpost.client.gui.screens.inventory;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import fuzs.puzzleslib.client.core.ClientCoreServices;
 import fuzs.tradingpost.TradingPost;
-import fuzs.tradingpost.client.TradingPostClient;
 import fuzs.tradingpost.mixin.client.accessor.ButtonAccessor;
 import fuzs.tradingpost.mixin.client.accessor.MerchantScreenAccessor;
 import fuzs.tradingpost.mixin.client.accessor.TradeOfferButtonAccessor;
@@ -15,10 +13,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.Widget;
+import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.inventory.MerchantScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.searchtree.SearchRegistry;
 import net.minecraft.client.searchtree.SearchTree;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundSelectTradePacket;
@@ -37,6 +36,7 @@ import java.util.Objects;
 
 public class TradingPostScreen extends MerchantScreen {
     public static final ResourceLocation MAGNIFYING_GLASS_LOCATION = new ResourceLocation(TradingPost.MOD_ID, "item/magnifying_glass");
+    public static final SearchRegistry.Key<MerchantOffer> OFFER_SEARCH_TREE = new SearchRegistry.Key<>();
     private static final ResourceLocation VILLAGER_LOCATION = new ResourceLocation("textures/gui/container/villager2.png");
     private static final ResourceLocation CREATIVE_INVENTORY_LOCATION = new ResourceLocation("textures/gui/container/creative_inventory/tab_item_search.png");
     private static final Component DEPRECATED_TOOLTIP = Component.translatable("merchant.deprecated");
@@ -54,13 +54,13 @@ public class TradingPostScreen extends MerchantScreen {
     @Override
     protected void init() {
         super.init();
-        this.tradeOfferButtons = this.getTradeOfferButtons(ClientCoreServices.SCREENS.getRenderableButtons(this));
+        this.tradeOfferButtons = this.getTradeOfferButtons(this.renderables);
         for (Button tradeOfferButton : this.tradeOfferButtons) {
 
             ((ButtonAccessor) tradeOfferButton).setOnPress(button -> {
 
                 MerchantScreenAccessor accessor = (MerchantScreenAccessor) this;
-                final int shopItem = ((TradeOfferButtonAccessor) button).getIndex() + accessor.getScrollOff();
+                final int shopItem = ((TradeOfferButtonAccessor) button).tradingpost$getIndex() + accessor.getScrollOff();
                 MerchantOffers offers = this.getMenu().getOffers();
                 accessor.setShopItem(shopItem);
                 this.getMenu().setSelectionHint(shopItem);
@@ -88,7 +88,7 @@ public class TradingPostScreen extends MerchantScreen {
         this.addWidget(this.searchBox);
     }
 
-    private Button[] getTradeOfferButtons(List<Widget> buttons) {
+    private Button[] getTradeOfferButtons(List<Renderable> buttons) {
         Button[] tradeOfferButtons = buttons.stream()
                 .filter(button -> button instanceof TradeOfferButtonAccessor)
                 .map(button -> (Button) button)
@@ -259,7 +259,7 @@ public class TradingPostScreen extends MerchantScreen {
             Button button = offerButtons[i];
             if (button.active && button.isHoveredOrFocused()) {
 
-                button.renderToolTip(matrixStack, mouseX, mouseY);
+                ((TradeOfferButtonAccessor) button).tradingpost$callRenderToolTip(matrixStack, mouseX, mouseY);
             }
 
             button.visible = i < this.getMenu().getOffers().size();
@@ -297,7 +297,7 @@ public class TradingPostScreen extends MerchantScreen {
         this.renderSearchBox(matrixStack, partialTicks, mouseX, mouseY);
         TextureAtlasSprite textureatlassprite = this.minecraft.getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(MAGNIFYING_GLASS_LOCATION);
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderTexture(0, textureatlassprite.atlas().location());
+        RenderSystem.setShaderTexture(0, textureatlassprite.atlasLocation());
         blit(matrixStack, this.leftPos, this.topPos + 4, this.getBlitOffset(), 16, 16, textureatlassprite);
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderTexture(0, VILLAGER_LOCATION);
@@ -373,7 +373,7 @@ public class TradingPostScreen extends MerchantScreen {
         if (query.isEmpty()) {
             offers.clearFilter();
         } else {
-            SearchTree<MerchantOffer> isearchtree = this.minecraft.getSearchTree(TradingPostClient.OFFER_SEARCH_TREE);
+            SearchTree<MerchantOffer> isearchtree = this.minecraft.getSearchTree(OFFER_SEARCH_TREE);
             offers.setFilter(isearchtree.search(query.toLowerCase(Locale.ROOT)));
         }
         ((MerchantScreenAccessor) this).setScrollOff(0);

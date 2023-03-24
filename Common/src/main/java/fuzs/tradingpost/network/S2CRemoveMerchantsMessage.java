@@ -1,6 +1,6 @@
 package fuzs.tradingpost.network;
 
-import fuzs.puzzleslib.network.Message;
+import fuzs.puzzleslib.api.network.v2.MessageV2;
 import fuzs.tradingpost.world.inventory.TradingPostMenu;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -8,7 +8,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 
-public class S2CRemoveMerchantsMessage implements Message<S2CRemoveMerchantsMessage> {
+public class S2CRemoveMerchantsMessage implements MessageV2<S2CRemoveMerchantsMessage> {
     private int containerId;
     private IntSet merchantIds;
 

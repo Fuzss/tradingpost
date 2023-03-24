@@ -1,6 +1,6 @@
 package fuzs.tradingpost.network;
 
-import fuzs.puzzleslib.network.Message;
+import fuzs.puzzleslib.api.network.v2.MessageV2;
 import fuzs.tradingpost.world.inventory.TradingPostMenu;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -8,7 +8,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.trading.MerchantOffers;
 
-public class S2CMerchantDataMessage implements Message<S2CMerchantDataMessage> {
+public class S2CMerchantDataMessage implements MessageV2<S2CMerchantDataMessage> {
     private int containerId;
     private int merchantId;
     private Component merchantTitle;

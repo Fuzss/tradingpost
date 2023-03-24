@@ -1,12 +1,12 @@
 package fuzs.tradingpost.network.client;
 
-import fuzs.puzzleslib.network.Message;
+import fuzs.puzzleslib.api.network.v2.MessageV2;
 import fuzs.tradingpost.world.inventory.TradingPostMenu;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 
-public class C2SClearSlotsMessage implements Message<C2SClearSlotsMessage> {
+public class C2SClearSlotsMessage implements MessageV2<C2SClearSlotsMessage> {
 
     @Override
     public void write(FriendlyByteBuf buf) {

@@ -1,12 +1,12 @@
 package fuzs.tradingpost;
 
-import fuzs.puzzleslib.core.CoreServices;
+import fuzs.puzzleslib.api.core.v1.ModConstructor;
 import net.fabricmc.api.ModInitializer;
 
 public class TradingPostFabric implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        CoreServices.FACTORIES.modConstructor(TradingPost.MOD_ID).accept(new TradingPost());
+        ModConstructor.construct(TradingPost.MOD_ID, TradingPost::new);
     }
 }

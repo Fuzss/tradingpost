@@ -4,6 +4,7 @@
   "compatibilityLevel": "JAVA_17",
   "package": "fuzs.tradingpost.mixin",
   "refmap": "tradingpost.refmap.json",
+  "plugin": "fuzs.tradingpost.mixin.ModMixinConfigPlugin",
   "mixins": [
     "accessor.MerchantMenuAccessor",
     "accessor.VillagerAccessor"
