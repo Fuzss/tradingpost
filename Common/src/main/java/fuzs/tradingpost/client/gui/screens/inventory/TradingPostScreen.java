@@ -1,5 +1,6 @@
 package fuzs.tradingpost.client.gui.screens.inventory;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import fuzs.tradingpost.TradingPost;
@@ -75,7 +76,7 @@ public class TradingPostScreen extends MerchantScreen {
             @Override
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
                 // left click clears text
-                if (this.isVisible() && button == 1) {
+                if (this.isVisible() && button == InputConstants.MOUSE_BUTTON_RIGHT) {
                     this.setValue("");
                     TradingPostScreen.this.refreshSearchResults();
                 }
@@ -128,7 +129,7 @@ public class TradingPostScreen extends MerchantScreen {
     }
 
     @Override
-    public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTime) {
+    public void render(PoseStack poseStack, int mouseX, int mouseY, float partialTime) {
 
         MerchantOffers merchantoffers = this.getMenu().getOffers();
         this.setButtonsActive(merchantoffers);
@@ -137,7 +138,7 @@ public class TradingPostScreen extends MerchantScreen {
         final Slot hoveredSlot = this.hoveredSlot;
         // set offers to empty to prevent MerchantScreen::render code from running, also disabled buttons drawing tooltips by changing scrollOff, as well as tooltip for hovered slot by removing hovered slot
         this.lock(true, merchantoffers.size(), null);
-        super.render(matrixStack, mouseX, mouseY, partialTime);
+        super.render(poseStack, mouseX, mouseY, partialTime);
         // reset everything so we can do this ourselves
         this.lock(false, scrollOff, hoveredSlot);
 
@@ -152,7 +153,7 @@ public class TradingPostScreen extends MerchantScreen {
                     RenderSystem.setShader(GameRenderer::getPositionTexShader);
                     RenderSystem.setShaderTexture(0, VILLAGER_LOCATION);
                     RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-                    blit(matrixStack, this.leftPos + 83 + 99, this.topPos + 35, this.getBlitOffset(), 311.0F, 0.0F, 28, 21, 512, 256);
+                    blit(poseStack, this.leftPos + 83 + 99, this.topPos + 35, 0, 311.0F, 0.0F, 28, 21, 512, 256);
                 }
             }
 
@@ -162,61 +163,63 @@ public class TradingPostScreen extends MerchantScreen {
             int posY = height + 16 + 2;
             RenderSystem.setShader(GameRenderer::getPositionTexShader);
             RenderSystem.setShaderTexture(0, VILLAGER_LOCATION);
-            ((MerchantScreenAccessor) this).callRenderScroller(matrixStack, width, height, merchantoffers);
+            ((MerchantScreenAccessor) this).callRenderScroller(poseStack, width, height, merchantoffers);
 
             for (int i = 0, merchantoffersSize = merchantoffers.size(); i < merchantoffersSize; i++) {
 
                 if (merchantoffers.size() <= 7 || (i >= scrollOff && i < 7 + scrollOff)) {
 
                     MerchantOffer merchantoffer = merchantoffers.get(i);
-                    ((MerchantScreenAccessor) this).callRenderButtonArrows(matrixStack, merchantoffer, width, posY + 1);
+                    ((MerchantScreenAccessor) this).callRenderButtonArrows(poseStack, merchantoffer, width, posY + 1);
                     if (!this.getMenu().getTraders().checkOffer(merchantoffer)) {
 
-                        GuiComponent.fill(matrixStack, posX, posY, posX + 88, posY + 20, 822018048);
+                        GuiComponent.fill(poseStack, posX, posY, posX + 88, posY + 20, 822018048);
                     }
 
                     ItemStack itemstack = merchantoffer.getBaseCostA();
                     ItemStack itemstack1 = merchantoffer.getCostA();
                     ItemStack itemstack2 = merchantoffer.getCostB();
                     ItemStack itemstack3 = merchantoffer.getResult();
-                    this.itemRenderer.blitOffset = 100.0F;
-                    this.itemRenderer.renderAndDecorateFakeItem(itemstack1, posX + 5, posY + 1);
+                    poseStack.pushPose();
+                    poseStack.translate(0.0F, 0.0F, 100.0F);
+                    this.itemRenderer.renderAndDecorateFakeItem(poseStack, itemstack1, posX + 5, posY + 1);
 
                     if (!itemstack2.isEmpty()) {
 
-                        this.itemRenderer.renderAndDecorateFakeItem(itemstack2, posX + 35, posY + 1);
+                        this.itemRenderer.renderAndDecorateFakeItem(poseStack, itemstack2, posX + 35, posY + 1);
                     }
 
-                    this.itemRenderer.renderAndDecorateFakeItem(itemstack3, posX + 68, posY + 1);
+                    this.itemRenderer.renderAndDecorateFakeItem(poseStack, itemstack3, posX + 68, posY + 1);
 
                     if (!this.getMenu().getTraders().checkOffer(merchantoffer)) {
 
                         RenderSystem.depthFunc(516);
-                        GuiComponent.fill(matrixStack, posX, posY, posX + 88, posY + 20, 822083583);
+                        GuiComponent.fill(poseStack, posX, posY, posX + 88, posY + 20, 822083583);
                         RenderSystem.depthFunc(515);
                     }
 
                     if (itemstack.getCount() == itemstack1.getCount()) {
 
-                        this.itemRenderer.renderGuiItemDecorations(this.font, itemstack1, posX + 5, posY + 1);
+                        this.itemRenderer.renderGuiItemDecorations(poseStack, this.font, itemstack1, posX + 5, posY + 1);
                     } else {
 
-                        this.itemRenderer.renderGuiItemDecorations(this.font, itemstack, posX + 5, posY + 1, itemstack.getCount() == 1 ? "1" : null);
-                        this.itemRenderer.renderGuiItemDecorations(this.font, itemstack1, posX + 5 + 14, posY + 1, itemstack1.getCount() == 1 ? "1" : null);
+                        this.itemRenderer.renderGuiItemDecorations(poseStack, this.font, itemstack, posX + 5, posY + 1, itemstack.getCount() == 1 ? "1" : null);
+                        this.itemRenderer.renderGuiItemDecorations(poseStack, this.font, itemstack1, posX + 5 + 14, posY + 1, itemstack1.getCount() == 1 ? "1" : null);
                         RenderSystem.setShader(GameRenderer::getPositionTexShader);
                         RenderSystem.setShaderTexture(0, VILLAGER_LOCATION);
-                        this.setBlitOffset(this.getBlitOffset() + 300);
-                        blit(matrixStack, posX + 5 + 7, posY + 1 + 12, this.getBlitOffset(), 0.0F, 176.0F, 9, 2, 512, 256);
-                        this.setBlitOffset(this.getBlitOffset() - 300);
+                        poseStack.pushPose();
+                        poseStack.translate(0.0F, 0.0F, 300.0F);
+                        blit(poseStack, posX + 5 + 7, posY + 1 + 12, 0, 0.0F, 176.0F, 9, 2, 512, 256);
+                        poseStack.popPose();
                     }
 
                     if (!itemstack2.isEmpty()) {
 
-                        this.itemRenderer.renderGuiItemDecorations(this.font, itemstack2, posX + 35, posY + 1);
+                        this.itemRenderer.renderGuiItemDecorations(poseStack, this.font, itemstack2, posX + 35, posY + 1);
                     }
 
-                    this.itemRenderer.renderGuiItemDecorations(this.font, itemstack3, posX + 68, posY + 1);
-                    this.itemRenderer.blitOffset = 0.0F;
+                    this.itemRenderer.renderGuiItemDecorations(poseStack, this.font, itemstack3, posX + 68, posY + 1);
+                    poseStack.popPose();
                     posY += 20;
                 }
             }
@@ -224,12 +227,12 @@ public class TradingPostScreen extends MerchantScreen {
             final MerchantOffer activeOffer = merchantoffers.get(shopItem);
             if (this.getMenu().showProgressBar()) {
 
-                ((MerchantScreenAccessor) this).callRenderProgressBar(matrixStack, width, height, activeOffer);
+                ((MerchantScreenAccessor) this).callRenderProgressBar(poseStack, width, height, activeOffer);
             }
 
             if (activeOffer.isOutOfStock() && this.isHovering(186, 35, 22, 21, mouseX, mouseY) && this.getMenu().canRestock()) {
                 
-                this.renderTooltip(matrixStack, DEPRECATED_TOOLTIP, mouseX, mouseY);
+                this.renderTooltip(poseStack, DEPRECATED_TOOLTIP, mouseX, mouseY);
             }
 
             posY = height + 16 + 2;
@@ -242,7 +245,7 @@ public class TradingPostScreen extends MerchantScreen {
 
                         if (this.isHovering(posX, posY, 88, 19, mouseX + this.leftPos, mouseY + this.topPos)) {
 
-                            this.renderTooltip(matrixStack, MERCHANT_GONE, mouseX, mouseY);
+                            this.renderTooltip(poseStack, MERCHANT_GONE, mouseX, mouseY);
                         }
                     }
 
@@ -259,13 +262,13 @@ public class TradingPostScreen extends MerchantScreen {
             Button button = offerButtons[i];
             if (button.active && button.isHoveredOrFocused()) {
 
-                ((TradeOfferButtonAccessor) button).tradingpost$callRenderToolTip(matrixStack, mouseX, mouseY);
+                ((TradeOfferButtonAccessor) button).tradingpost$callRenderToolTip(poseStack, mouseX, mouseY);
             }
 
             button.visible = i < this.getMenu().getOffers().size();
         }
 
-        this.renderTooltip(matrixStack, mouseX, mouseY);
+        this.renderTooltip(poseStack, mouseX, mouseY);
     }
 
     private void setButtonsActive(MerchantOffers merchantoffers) {
@@ -298,7 +301,7 @@ public class TradingPostScreen extends MerchantScreen {
         TextureAtlasSprite textureatlassprite = this.minecraft.getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(MAGNIFYING_GLASS_LOCATION);
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderTexture(0, textureatlassprite.atlasLocation());
-        blit(matrixStack, this.leftPos, this.topPos + 4, this.getBlitOffset(), 16, 16, textureatlassprite);
+        blit(matrixStack, this.leftPos, this.topPos + 4, 0, 16, 16, textureatlassprite);
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderTexture(0, VILLAGER_LOCATION);
     }
@@ -308,7 +311,7 @@ public class TradingPostScreen extends MerchantScreen {
         RenderSystem.setShaderTexture(0, CREATIVE_INVENTORY_LOCATION);
         int i = (this.width - this.imageWidth) / 2;
         int j = (this.height - this.imageHeight) / 2;
-        blit(matrixStack, i + 11, j + 4, this.getBlitOffset(), 80.0F, 4.0F, 90, 12, 256, 256);
+        blit(matrixStack, i + 11, j + 4, 0, 80.0F, 4.0F, 90, 12, 256, 256);
         this.searchBox.render(matrixStack, mouseX, mouseY, partialTicks);
     }
 
@@ -328,10 +331,10 @@ public class TradingPostScreen extends MerchantScreen {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifierKeys) {
         this.ignoreTextInput = false;
-        final String lastSearch = this.searchBox.getValue();
+        final String lastSearch = this.searchBox.getValue().trim();
         if (this.searchBox.keyPressed(keyCode, scanCode, modifierKeys)) {
 
-            if (!Objects.equals(this.searchBox.getValue(), lastSearch)) {
+            if (!Objects.equals(this.searchBox.getValue().trim(), lastSearch)) {
 
                 this.refreshSearchResults();
             }
@@ -341,7 +344,7 @@ public class TradingPostScreen extends MerchantScreen {
             return true;
         } else if (this.minecraft.options.keyChat.matches(keyCode, scanCode) && !this.searchBox.isFocused()) {
             this.ignoreTextInput = true;
-            this.searchBox.setFocus(true);
+            this.searchBox.setFocused(true);
             return true;
         }
         return super.keyPressed(keyCode, scanCode, modifierKeys);
@@ -350,10 +353,10 @@ public class TradingPostScreen extends MerchantScreen {
     @Override
     public boolean charTyped(char typedChar, int modifierKeys) {
 
-        final String lastSearch = this.searchBox.getValue();
+        final String lastSearch = this.searchBox.getValue().trim();
         if (!this.ignoreTextInput && this.searchBox.charTyped(typedChar, modifierKeys)) {
 
-            if (!Objects.equals(this.searchBox.getValue(), lastSearch)) {
+            if (!Objects.equals(this.searchBox.getValue().trim(), lastSearch)) {
 
                 this.refreshSearchResults();
             }
@@ -369,7 +372,7 @@ public class TradingPostScreen extends MerchantScreen {
         if (!(this.getMenu().getOffers() instanceof TradingPostOffers offers)) {
             return;
         }
-        String query = this.searchBox.getValue();
+        String query = this.searchBox.getValue().trim();
         if (query.isEmpty()) {
             offers.clearFilter();
         } else {

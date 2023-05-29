@@ -28,6 +28,6 @@ public class TradingPostForge {
         final PackOutput packOutput = dataGenerator.getPackOutput();
         final CompletableFuture<HolderLookup.Provider> lookupProvider = evt.getLookupProvider();
         final ExistingFileHelper fileHelper = evt.getExistingFileHelper();
-        dataGenerator.addProvider(true, new ModSpriteSourceProvider(packOutput, TradingPost.MOD_ID, fileHelper));
+        dataGenerator.addProvider(true, new ModSpriteSourceProvider(packOutput, fileHelper));
     }
 }

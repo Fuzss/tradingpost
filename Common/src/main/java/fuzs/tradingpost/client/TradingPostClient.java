@@ -48,7 +48,7 @@ public class TradingPostClient implements ClientModConstructor {
 
     @Override
     public void onBuildCreativeModeTabContents(BuildCreativeModeTabContentsContext context) {
-        context.registerBuildListener(CreativeModeTabs.FUNCTIONAL_BLOCKS, (featureFlagSet, output, bl) -> {
+        context.registerBuildListener(CreativeModeTabs.FUNCTIONAL_BLOCKS, (itemDisplayParameters, output) -> {
             output.accept(ModRegistry.TRADING_POST_ITEM.get());
         });
     }

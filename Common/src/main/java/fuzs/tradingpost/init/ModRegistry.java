@@ -22,7 +22,8 @@ public class ModRegistry {
     public static final RegistryReference<Item> TRADING_POST_ITEM = REGISTRY.registerBlockItem(TRADING_POST_BLOCK);
     public static final RegistryReference<BlockEntityType<TradingPostBlockEntity>> TRADING_POST_BLOCK_ENTITY_TYPE = REGISTRY.registerBlockEntityType("trading_post", () -> BlockEntityType.Builder.of(TradingPostBlockEntity::new, TRADING_POST_BLOCK.get()));
     public static final RegistryReference<MenuType<TradingPostMenu>> TRADING_POST_MENU_TYPE = REGISTRY.registerMenuType("trading_post", () -> TradingPostMenu::new);
-    public static final TagKey<EntityType<?>> BLACKLISTED_TRADERS_TAG = REGISTRY.createEntityTypeTag("blacklisted_traders");
+
+    public static final TagKey<EntityType<?>> BLACKLISTED_TRADERS_TAG = REGISTRY.registerEntityTypeTag("blacklisted_traders");
 
     public static void touch() {
 
