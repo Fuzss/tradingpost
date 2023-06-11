@@ -9,6 +9,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 public interface ButtonAccessor {
 
     @Mutable
-    @Accessor
-    void setOnPress(Button.OnPress onPress);
+    @Accessor("onPress")
+    void tradingpost$setOnPress(Button.OnPress onPress);
 }

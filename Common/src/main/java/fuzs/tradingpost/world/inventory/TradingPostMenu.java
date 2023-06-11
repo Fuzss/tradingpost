@@ -112,7 +112,7 @@ public class TradingPostMenu extends MerchantMenu {
         if (!this.traders.isClientSide()) {
             Merchant merchant = this.traders.getCurrentMerchant();
             if (merchant instanceof Entity entity) {
-                entity.getLevel().playLocalSound(entity.getX(), entity.getY(), entity.getZ(), this.traders.getNotifyTradeSound(), SoundSource.NEUTRAL, 1.0F, 1.0F, false);
+                entity.level().playLocalSound(entity.getX(), entity.getY(), entity.getZ(), this.traders.getNotifyTradeSound(), SoundSource.NEUTRAL, 1.0F, 1.0F, false);
             }
         }
     }
