@@ -1,4 +1,4 @@
-package mixin;
+package fuzs.tradingpost.mixin;
 
 import net.fabricmc.loader.api.FabricLoader;
 import org.objectweb.asm.tree.ClassNode;
