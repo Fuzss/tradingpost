@@ -1,7 +1,7 @@
 {
   "block.tradingpost.trading_post": "交易台",
   "container.trading_post": "交易台",
-  "trading_post.no_trader_found": "近くに交易できる村人がいません",
+  "trading_post.no_trader_found": "近くに交易できる村人が居ません",
   "trading_post.trader_gone": "交易できる村人が居なくなりました。",
   "trading_post.search": "検索..."
 }
