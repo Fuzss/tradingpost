@@ -301,6 +301,7 @@ public class TradingPostScreen extends MerchantScreen {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseKey) {
         if (this.searchBox.mouseClicked(mouseX, mouseY, mouseKey)) {
+            this.searchBox.setFocused(true);
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, mouseKey);

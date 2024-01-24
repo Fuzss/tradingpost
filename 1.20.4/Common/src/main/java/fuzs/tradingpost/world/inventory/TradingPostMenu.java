@@ -7,6 +7,7 @@ import fuzs.tradingpost.mixin.accessor.MerchantMenuAccessor;
 import fuzs.tradingpost.world.entity.npc.LocalMerchant;
 import fuzs.tradingpost.world.entity.npc.MerchantCollection;
 import fuzs.tradingpost.world.level.block.TradingPostBlock;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
@@ -16,6 +17,7 @@ import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.Merchant;
 import net.minecraft.world.item.trading.MerchantOffers;
+import net.minecraft.world.level.Level;
 
 import java.util.Optional;
 
@@ -50,20 +52,23 @@ public class TradingPostMenu extends MerchantMenu {
 
     @Override
     public MenuType<?> getType() {
-        return ModRegistry.TRADING_POST_MENU_TYPE.get();
+        return ModRegistry.TRADING_POST_MENU_TYPE.value();
     }
 
     @Override
     public boolean stillValid(Player player) {
         // this also updates merchants, so run independent of config option
         // don't want this to go off on every tick
-        Optional<Boolean> anyTrader = this.access.evaluate((level, pos) -> this.traders.updateAvailableMerchants(this.containerId, pos, player, TradingPost.CONFIG.get(ServerConfig.class).enforceRange && ++this.ticks >= 20));
+        Optional<Boolean> anyTrader = this.access.evaluate((Level level, BlockPos pos) -> {
+            boolean testRange = TradingPost.CONFIG.get(ServerConfig.class).enforceRange && ++this.ticks >= 20;
+            return this.traders.updateAvailableMerchants(this.containerId, pos, player, testRange);
+        });
         if (this.ticks >= 20) this.ticks = 0;
         if (TradingPost.CONFIG.get(ServerConfig.class).closeScreen && anyTrader.isPresent() && !anyTrader.get()) {
-            player.displayClientMessage(TradingPostBlock.NO_MERCHANT_FOUND, false);
+            player.displayClientMessage(TradingPostBlock.MISSING_MERCHANT_COMPONENT, false);
             return false;
         }
-        return stillValid(this.access, player, ModRegistry.TRADING_POST_BLOCK.get());
+        return stillValid(this.access, player, ModRegistry.TRADING_POST_BLOCK.value());
     }
 
     @Override
@@ -151,14 +156,12 @@ public class TradingPostMenu extends MerchantMenu {
     }
 
     public void addMerchant(Player playerEntity, int merchantId, Component merchantTitle, MerchantOffers offers, int villagerLevel, int villagerXp, boolean showProgress, boolean canRestock) {
-
         LocalMerchant merchant = new LocalMerchant(playerEntity, merchantTitle, offers, villagerLevel, villagerXp, showProgress, canRestock);
         this.traders.addMerchant(merchantId, merchant);
     }
 
     @Override
     public int getTraderLevel() {
-
         return this.traders.getTraderLevel();
     }
 
@@ -174,27 +177,31 @@ public class TradingPostMenu extends MerchantMenu {
 
     @Override
     public void setShowProgressBar(boolean showProgressBar) {
-        // we don't raise an exception anywhere here as you never know what other mods are up to since this extends vanilla's merchant menu
+        // Don't throw to not break other mods possibly interfering with the merchant menu.
         TradingPost.LOGGER.error("Operation setShowProgressBar no supported on trading post, set showProgressBar to merchants directly");
     }
 
     @Override
     public void setXp(int xpValue) {
+        // Don't throw to not break other mods possibly interfering with the merchant menu.
         TradingPost.LOGGER.error("Operation setXp no supported on trading post, set xp to merchants directly");
     }
 
     @Override
     public void setMerchantLevel(int merchantLevel) {
+        // Don't throw to not break other mods possibly interfering with the merchant menu.
         TradingPost.LOGGER.error("Operation setMerchantLevel no supported on trading post, set level to merchants directly");
     }
 
     @Override
     public void setCanRestock(boolean canRestock) {
+        // Don't throw to not break other mods possibly interfering with the merchant menu.
         TradingPost.LOGGER.error("Operation setCanRestock no supported on trading post, set canRestock to merchants directly");
     }
 
     @Override
     public void setOffers(MerchantOffers offers) {
+        // Don't throw to not break other mods possibly interfering with the merchant menu.
         TradingPost.LOGGER.error("Operation setOffers no supported on trading post, set offers to merchants directly");
     }
 }

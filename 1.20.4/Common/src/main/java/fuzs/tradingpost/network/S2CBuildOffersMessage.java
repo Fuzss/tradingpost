@@ -1,6 +1,7 @@
 package fuzs.tradingpost.network;
 
 import fuzs.puzzleslib.api.network.v2.MessageV2;
+import fuzs.tradingpost.client.TradingPostClient;
 import fuzs.tradingpost.client.gui.screens.inventory.TradingPostScreen;
 import fuzs.tradingpost.world.inventory.TradingPostMenu;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
@@ -52,7 +53,7 @@ public class S2CBuildOffersMessage implements MessageV2<S2CBuildOffersMessage> {
                 Minecraft minecraft = (Minecraft) gameInstance;
                 if (message.containerId == player.containerMenu.containerId && player.containerMenu instanceof TradingPostMenu playerMenu && minecraft.screen instanceof TradingPostScreen screen) {
                     playerMenu.getTraders().buildOffers(message.idToOfferCount);
-                    minecraft.populateSearchTree(TradingPostScreen.OFFER_SEARCH_TREE, playerMenu.getOffers());
+                    minecraft.populateSearchTree(TradingPostClient.OFFER_SEARCH_TREE, playerMenu.getOffers());
                     screen.refreshSearchResults();
                 }
             }

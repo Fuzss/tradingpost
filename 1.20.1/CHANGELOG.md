@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog].
 
+## [v8.0.2-1.20.1] - 2024-01-24
+### Fix
+- Fix unable to click on search box to select
+
 ## [v8.0.1-1.20.1] - 2023-07-13
 ### Fixed
 - Fixed Mixin config plugin being configured incorrectly on Fabric

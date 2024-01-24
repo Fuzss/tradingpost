@@ -1,5 +1,7 @@
 package fuzs.tradingpost.world.level.block;
 
+import com.mojang.serialization.MapCodec;
+import fuzs.puzzleslib.api.block.v1.entity.TickingEntityBlock;
 import fuzs.tradingpost.TradingPost;
 import fuzs.tradingpost.config.ServerConfig;
 import fuzs.tradingpost.init.ModRegistry;
@@ -12,11 +14,11 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.Nameable;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
@@ -29,8 +31,6 @@ import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -45,15 +45,14 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.OptionalInt;
 
-@SuppressWarnings("deprecation")
-public class TradingPostBlock extends BaseEntityBlock implements SimpleWaterloggedBlock {
-    public static final Component CONTAINER_TITLE = Component.translatable("container.trading_post");
-    public static final Component NO_MERCHANT_FOUND = Component.translatable("trading_post.no_trader_found");
+public class TradingPostBlock extends BaseEntityBlock implements SimpleWaterloggedBlock, TickingEntityBlock<TradingPostBlockEntity> {
+    public static final Component MISSING_MERCHANT_COMPONENT = Component.translatable("trading_post.no_trader_found");
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
+    public static final MapCodec<TradingPostBlock> CODEC = simpleCodec(TradingPostBlock::new);
     private static final VoxelShape LEG1 = Block.box(0.0, 0.0, 0.0, 4.0, 8.0, 4.0);
     private static final VoxelShape LEG2 = Block.box(12.0, 0.0, 0.0, 16.0, 8.0, 4.0);
     private static final VoxelShape LEG3 = Block.box(0.0, 0.0, 12.0, 4.0, 8.0, 16.0);
@@ -64,6 +63,11 @@ public class TradingPostBlock extends BaseEntityBlock implements SimpleWaterlogg
     public TradingPostBlock(Properties blockProperties) {
         super(blockProperties);
         this.registerDefaultState(this.stateDefinition.any().setValue(WATERLOGGED, Boolean.FALSE));
+    }
+
+    @Override
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        return CODEC;
     }
 
     @Override
@@ -91,24 +95,18 @@ public class TradingPostBlock extends BaseEntityBlock implements SimpleWaterlogg
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
-        return this.defaultBlockState().setValue(WATERLOGGED, fluidstate.getType() == Fluids.WATER);
+        FluidState fluidState = context.getLevel().getFluidState(context.getClickedPos());
+        return this.defaultBlockState().setValue(WATERLOGGED, fluidState.getType() == Fluids.WATER);
     }
 
     @Override
-    public FluidState getFluidState(BlockState state) {
-        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
+    public FluidState getFluidState(BlockState blockState) {
+        return blockState.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(blockState);
     }
 
-    @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pPos, BlockState pState) {
-        return new TradingPostBlockEntity(pPos, pState);
-    }
-
-    @Nullable
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level pLevel, BlockState pState, BlockEntityType<T> pBlockEntityType) {
-        return pLevel.isClientSide ? createTickerHelper(pBlockEntityType, ModRegistry.TRADING_POST_BLOCK_ENTITY_TYPE.get(), TradingPostBlockEntity::tickEmeraldAnimation) : null;
+    public BlockEntityType<? extends TradingPostBlockEntity> getBlockEntityType() {
+        return ModRegistry.TRADING_POST_BLOCK_ENTITY_TYPE.value();
     }
 
     @Override
@@ -116,14 +114,14 @@ public class TradingPostBlock extends BaseEntityBlock implements SimpleWaterlogg
         if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         } else {
-            Vec3 blockCenterPos = Vec3.atCenterOf(pos);
+            Vec3 atCenter = Vec3.atCenterOf(pos);
             final int horizontalRange = TradingPost.CONFIG.get(ServerConfig.class).horizontalRange;
             final int verticalRange = TradingPost.CONFIG.get(ServerConfig.class).verticalRange;
-            List<Entity> nearbyTraders = level.getEntitiesOfClass(Entity.class, new AABB(blockCenterPos.add(-horizontalRange, -verticalRange, -horizontalRange), blockCenterPos.add(horizontalRange, verticalRange, horizontalRange)), this::canTrade);
-            if (!nearbyTraders.isEmpty()) {
+            List<Entity> traders = level.getEntitiesOfClass(Entity.class, new AABB(atCenter.add(-horizontalRange, -verticalRange, -horizontalRange), atCenter.add(horizontalRange, verticalRange, horizontalRange)), TradingPostBlock::isAllowedToTrade);
+            if (!traders.isEmpty()) {
                 ContainerLevelAccess access = ContainerLevelAccess.create(level, pos);
                 MerchantCollection merchants = new MerchantCollection(access);
-                for (Entity merchant : nearbyTraders) {
+                for (Entity merchant : traders) {
                     if (merchant instanceof Villager) {
                         ((VillagerAccessor) merchant).callUpdateSpecialPrices(player);
                     }
@@ -131,41 +129,42 @@ public class TradingPostBlock extends BaseEntityBlock implements SimpleWaterlogg
                 }
                 merchants.setTradingPlayer(player);
                 merchants.buildOffers(merchants.getIdToOfferCountMap());
-                Component title = this.getContainerTitle(level, pos);
-                this.openTradingScreen(player, merchants, title, access);
+                Component title;
+                if (level.getBlockEntity(pos) instanceof TradingPostBlockEntity blockEntity)
+                    title = blockEntity.getDisplayName();
+                else {
+                    title = TradingPostBlockEntity.CONTAINER_COMPONENT;
+                }
+                OptionalInt result = player.openMenu(new SimpleMenuProvider((int containerId, Inventory inventory, Player containerPlayer) -> {
+                    return new TradingPostMenu(containerId, inventory, merchants, access);
+                }, title));
+                result.ifPresent((int containerId) -> {
+                    merchants.sendMerchantData(containerId, player);
+                });
             } else {
-                player.displayClientMessage(NO_MERCHANT_FOUND, false);
+                player.displayClientMessage(MISSING_MERCHANT_COMPONENT, false);
             }
             return InteractionResult.CONSUME;
         }
     }
 
-    private boolean canTrade(Entity entity) {
-        if (TradingPost.CONFIG.get(ServerConfig.class).traderBlacklist.contains(entity.getType()) || entity.getType().is(ModRegistry.BLACKLISTED_TRADERS_TAG)) {
+    public static boolean isAllowedToTrade(Entity entity) {
+        if (entity.getType().is(ModRegistry.CONCEALED_TRADERS_ENTITY_TYPE_TAG)) {
             return false;
         }
-        if (!entity.isAlive() || !(entity instanceof Merchant) || ((Merchant) entity).getTradingPlayer() != null || ((Merchant) entity).getOffers().isEmpty()) {
+
+        if (!entity.isAlive() || !(entity instanceof Merchant merchant) || merchant.getTradingPlayer() != null || merchant.getOffers().isEmpty()) {
             return false;
         }
-        return !(entity instanceof LivingEntity) || (!((LivingEntity) entity).isSleeping() && !((LivingEntity) entity).isBaby());
-    }
 
-    private Component getContainerTitle(Level level, BlockPos pos) {
-        BlockEntity tileentity = level.getBlockEntity(pos);
-        return tileentity instanceof TradingPostBlockEntity ? ((Nameable) tileentity).getDisplayName() : TradingPostBlock.CONTAINER_TITLE;
-    }
-
-    private void openTradingScreen(Player player, MerchantCollection merchants, Component title, ContainerLevelAccess worldPosCallable) {
-        player.openMenu(new SimpleMenuProvider((containerMenuId, playerInventory, playerEntity) -> new TradingPostMenu(containerMenuId, playerInventory, merchants, worldPosCallable), title))
-                .ifPresent(containerId -> merchants.sendMerchantData(containerId, player));
+        return !(entity instanceof LivingEntity livingEntity) || !livingEntity.isSleeping() && !livingEntity.isBaby();
     }
 
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity entity, ItemStack stack) {
         if (stack.hasCustomHoverName()) {
-            BlockEntity tileentity = level.getBlockEntity(pos);
-            if (tileentity instanceof TradingPostBlockEntity) {
-                ((TradingPostBlockEntity) tileentity).setCustomName(stack.getHoverName());
+            if (level.getBlockEntity(pos) instanceof TradingPostBlockEntity blockEntity) {
+                blockEntity.setCustomName(stack.getHoverName());
             }
         }
     }

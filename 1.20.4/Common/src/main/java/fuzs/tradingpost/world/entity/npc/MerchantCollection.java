@@ -8,7 +8,7 @@ import fuzs.tradingpost.network.S2CBuildOffersMessage;
 import fuzs.tradingpost.network.S2CMerchantDataMessage;
 import fuzs.tradingpost.network.S2CRemoveMerchantsMessage;
 import fuzs.tradingpost.world.item.trading.TradingPostOffers;
-import fuzs.tradingpost.world.level.block.TradingPostBlock;
+import fuzs.tradingpost.world.level.block.entity.TradingPostBlockEntity;
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.core.BlockPos;
@@ -237,7 +237,7 @@ public class MerchantCollection implements Merchant {
     public void sendMerchantData(final int containerId, Player player) {
         for (Map.Entry<Integer, Merchant> entry : this.idToMerchant.int2ObjectEntrySet()) {
             Merchant merchant = entry.getValue();
-            final Component merchantTitle = merchant instanceof Entity ? ((Entity) merchant).getDisplayName() : TradingPostBlock.CONTAINER_TITLE;
+            final Component merchantTitle = merchant instanceof Entity ? ((Entity) merchant).getDisplayName() : TradingPostBlockEntity.CONTAINER_COMPONENT;
             final int merchantLevel = merchant instanceof VillagerDataHolder ? ((VillagerDataHolder) merchant).getVillagerData().getLevel() : 0;
             S2CMerchantDataMessage message = new S2CMerchantDataMessage(containerId, entry.getKey(), merchantTitle, merchant.getOffers(), merchantLevel, merchant.getVillagerXp(), merchant.showProgressBar(), merchant.canRestock());
             TradingPost.NETWORK.sendTo(message, (ServerPlayer) player);

@@ -1,19 +1,20 @@
 package fuzs.tradingpost.world.level.block.entity;
 
+import fuzs.puzzleslib.api.block.v1.entity.TickingBlockEntity;
 import fuzs.tradingpost.init.ModRegistry;
-import fuzs.tradingpost.world.level.block.TradingPostBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Nameable;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-public class TradingPostBlockEntity extends BlockEntity implements Nameable {
+public class TradingPostBlockEntity extends BlockEntity implements Nameable, TickingBlockEntity {
+    public static final Component CONTAINER_COMPONENT = Component.translatable("container.trading_post");
+
     private Component name;
     public int time;
     public float open;
@@ -22,8 +23,8 @@ public class TradingPostBlockEntity extends BlockEntity implements Nameable {
     public float oRot;
     private float tRot;
 
-    public TradingPostBlockEntity(BlockPos pWorldPosition, BlockState pBlockState) {
-        super(ModRegistry.TRADING_POST_BLOCK_ENTITY_TYPE.get(), pWorldPosition, pBlockState);
+    public TradingPostBlockEntity(BlockPos blockPos, BlockState blockState) {
+        super(ModRegistry.TRADING_POST_BLOCK_ENTITY_TYPE.value(), blockPos, blockState);
     }
 
     @Override
@@ -42,48 +43,49 @@ public class TradingPostBlockEntity extends BlockEntity implements Nameable {
         }
     }
 
-    public static void tickEmeraldAnimation(Level pLevel, BlockPos pPos, BlockState pState, TradingPostBlockEntity pBlockEntity) {
-        if (pLevel == null || !pLevel.isClientSide) return;
-        pBlockEntity.oOpen = pBlockEntity.open;
-        pBlockEntity.oRot = pBlockEntity.rot;
-        Player playerentity = pLevel.getNearestPlayer((double) pPos.getX() + 0.5, (double) pPos.getY() + 0.5, (double) pPos.getZ() + 0.5, 3.0, false);
+    @Override
+    public void clientTick() {
+        if (this.getLevel() == null || !this.getLevel().isClientSide) return;
+        this.oOpen = this.open;
+        this.oRot = this.rot;
+        Player playerentity = this.getLevel().getNearestPlayer((double) this.getBlockPos().getX() + 0.5, (double) this.getBlockPos().getY() + 0.5, (double) this.getBlockPos().getZ() + 0.5, 3.0, false);
         if (playerentity != null) {
-            double d0 = playerentity.getX() - ((double) pPos.getX() + 0.5);
-            double d1 = playerentity.getZ() - ((double) pPos.getZ() + 0.5);
-            pBlockEntity.tRot = (float) Mth.atan2(d1, d0);
-            pBlockEntity.open += 0.1F;
+            double d0 = playerentity.getX() - ((double) this.getBlockPos().getX() + 0.5);
+            double d1 = playerentity.getZ() - ((double) this.getBlockPos().getZ() + 0.5);
+            this.tRot = (float) Mth.atan2(d1, d0);
+            this.open += 0.1F;
         } else {
-            pBlockEntity.tRot += 0.02F;
-            pBlockEntity.open -= 0.1F;
+            this.tRot += 0.02F;
+            this.open -= 0.1F;
         }
-        while(pBlockEntity.rot >= (float) Math.PI) {
-            pBlockEntity.rot -= ((float) Math.PI * 2.0F);
+        while(this.rot >= (float) Math.PI) {
+            this.rot -= ((float) Math.PI * 2.0F);
         }
-        while(pBlockEntity.rot < -(float) Math.PI) {
-            pBlockEntity.rot += ((float) Math.PI * 2.0F);
+        while(this.rot < -(float) Math.PI) {
+            this.rot += ((float) Math.PI * 2.0F);
         }
-        while(pBlockEntity.tRot >= (float) Math.PI) {
-            pBlockEntity.tRot -= ((float) Math.PI * 2.0F);
+        while(this.tRot >= (float) Math.PI) {
+            this.tRot -= ((float) Math.PI * 2.0F);
         }
-        while(pBlockEntity.tRot < -(float) Math.PI) {
-            pBlockEntity.tRot += ((float) Math.PI * 2.0F);
+        while(this.tRot < -(float) Math.PI) {
+            this.tRot += ((float) Math.PI * 2.0F);
         }
         float f2;
-        f2 = pBlockEntity.tRot - pBlockEntity.rot;
+        f2 = this.tRot - this.rot;
         while (f2 >= (float) Math.PI) {
             f2 -= ((float) Math.PI * 2.0F);
         }
         while(f2 < -(float) Math.PI) {
             f2 += ((float) Math.PI * 2.0F);
         }
-        pBlockEntity.rot += f2 * 0.4F;
-        pBlockEntity.open = Mth.clamp(pBlockEntity.open, 0.0F, 1.0F);
-        ++pBlockEntity.time;
+        this.rot += f2 * 0.4F;
+        this.open = Mth.clamp(this.open, 0.0F, 1.0F);
+        ++this.time;
     }
 
     @Override
     public Component getName() {
-        return this.name != null ? this.name : TradingPostBlock.CONTAINER_TITLE;
+        return this.name != null ? this.name : CONTAINER_COMPONENT;
     }
 
     public void setCustomName(@Nullable Component textComponent) {

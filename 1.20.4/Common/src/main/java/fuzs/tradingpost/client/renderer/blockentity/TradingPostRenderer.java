@@ -3,7 +3,6 @@ package fuzs.tradingpost.client.renderer.blockentity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import fuzs.tradingpost.world.level.block.entity.TradingPostBlockEntity;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -18,9 +17,10 @@ import net.minecraft.world.level.Level;
  * Mostly copied from Quark's <a href="https://github.com/VazkiiMods/Quark/blob/master/src/main/java/vazkii/quark/addons/oddities/client/render/be/MatrixEnchantingTableRenderer.java">MatrixEnchantingTableRenderer.java</a> by Vazkii, thanks!
  */
 public class TradingPostRenderer implements BlockEntityRenderer<TradingPostBlockEntity> {
+    private final ItemRenderer itemRenderer;
 
     public TradingPostRenderer(BlockEntityRendererProvider.Context context) {
-
+        this.itemRenderer = context.getItemRenderer();
     }
 
     @Override
@@ -50,9 +50,7 @@ public class TradingPostRenderer implements BlockEntityRenderer<TradingPostBlock
         matrixStackIn.mulPose(Axis.XP.rotationDegrees(-90.0F * (bookOpen - 1.0F)));
         float hoveringHeight = (float) Math.sin(ageInTicks * 0.06F) * bookOpen * 0.2F;
         matrixStackIn.translate(0.0F, hoveringHeight, 0.0F);
-        ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
-        itemRenderer.renderStatic(stack, ItemDisplayContext.FIXED, combinedLightIn, combinedOverlayIn, matrixStackIn, bufferIn, level, 0);
+        this.itemRenderer.renderStatic(stack, ItemDisplayContext.FIXED, combinedLightIn, combinedOverlayIn, matrixStackIn, bufferIn, level, 0);
         matrixStackIn.popPose();
     }
-
 }
