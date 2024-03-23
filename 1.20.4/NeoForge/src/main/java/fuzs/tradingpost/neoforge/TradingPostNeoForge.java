@@ -7,8 +7,6 @@ import fuzs.tradingpost.data.ModBlockLootProvider;
 import fuzs.tradingpost.data.ModBlockTagProvider;
 import fuzs.tradingpost.data.ModEntityTypeTagProvider;
 import fuzs.tradingpost.data.ModRecipeProvider;
-import fuzs.tradingpost.data.client.ModLanguageProvider;
-import fuzs.tradingpost.data.client.ModModelProvider;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLConstructModEvent;
@@ -20,6 +18,11 @@ public class TradingPostNeoForge {
     @SubscribeEvent
     public static void onConstructMod(final FMLConstructModEvent evt) {
         ModConstructor.construct(TradingPost.MOD_ID, TradingPost::new);
-        DataProviderHelper.registerDataProviders(TradingPost.MOD_ID, ModBlockLootProvider::new, ModBlockTagProvider::new, ModEntityTypeTagProvider::new, ModRecipeProvider::new, ModLanguageProvider::new, ModModelProvider::new);
+        DataProviderHelper.registerDataProviders(TradingPost.MOD_ID,
+                ModBlockLootProvider::new,
+                ModBlockTagProvider::new,
+                ModEntityTypeTagProvider::new,
+                ModRecipeProvider::new
+        );
     }
 }
