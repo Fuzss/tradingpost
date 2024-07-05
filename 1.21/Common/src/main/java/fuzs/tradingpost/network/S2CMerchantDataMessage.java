@@ -3,7 +3,9 @@ package fuzs.tradingpost.network;
 import fuzs.puzzleslib.api.network.v2.MessageV2;
 import fuzs.tradingpost.world.inventory.TradingPostMenu;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.trading.MerchantOffers;
@@ -37,8 +39,8 @@ public class S2CMerchantDataMessage implements MessageV2<S2CMerchantDataMessage>
     public void write(FriendlyByteBuf buf) {
         buf.writeVarInt(this.containerId);
         buf.writeInt(this.merchantId);
-        buf.writeComponent(this.merchantTitle);
-        this.offers.writeToStream(buf);
+        ComponentSerialization.TRUSTED_STREAM_CODEC.encode((RegistryFriendlyByteBuf) buf, this.merchantTitle);
+        MerchantOffers.STREAM_CODEC.encode((RegistryFriendlyByteBuf) buf, this.offers);
         buf.writeVarInt(this.villagerLevel);
         buf.writeVarInt(this.villagerXp);
         buf.writeBoolean(this.showProgress);
@@ -49,8 +51,8 @@ public class S2CMerchantDataMessage implements MessageV2<S2CMerchantDataMessage>
     public void read(FriendlyByteBuf buf) {
         this.containerId = buf.readVarInt();
         this.merchantId = buf.readInt();
-        this.merchantTitle = buf.readComponent();
-        this.offers = MerchantOffers.createFromStream(buf);
+        this.merchantTitle = ComponentSerialization.TRUSTED_STREAM_CODEC.decode((RegistryFriendlyByteBuf) buf);
+        this.offers = MerchantOffers.STREAM_CODEC.decode((RegistryFriendlyByteBuf) buf);
         this.villagerLevel = buf.readVarInt();
         this.villagerXp = buf.readVarInt();
         this.showProgress = buf.readBoolean();

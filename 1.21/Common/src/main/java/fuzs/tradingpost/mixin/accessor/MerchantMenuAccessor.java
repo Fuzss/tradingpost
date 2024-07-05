@@ -11,10 +11,10 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 public interface MerchantMenuAccessor {
 
     @Mutable
-    @Accessor
-    void setTrader(Merchant trader);
+    @Accessor("trader")
+    void tradingpost$setTrader(Merchant trader);
 
     @Mutable
-    @Accessor
-    void setTradeContainer(MerchantContainer tradeContainer);
+    @Accessor("tradeContainer")
+    void tradingpost$setTradeContainer(MerchantContainer tradeContainer);
 }

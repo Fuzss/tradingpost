@@ -8,6 +8,6 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 @Mixin(Villager.class)
 public interface VillagerAccessor {
 
-    @Invoker
-    void callUpdateSpecialPrices(Player player);
+    @Invoker("updateSpecialPrices")
+    void tradingpost$callUpdateSpecialPrices(Player player);
 }

@@ -18,7 +18,6 @@ import net.minecraft.world.item.trading.MerchantOffer;
 import java.util.stream.Stream;
 
 public class TradingPostClient implements ClientModConstructor {
-
     public static final SearchRegistry.Key<MerchantOffer> OFFER_SEARCH_TREE = new SearchRegistry.Key<>();
 
     @Override

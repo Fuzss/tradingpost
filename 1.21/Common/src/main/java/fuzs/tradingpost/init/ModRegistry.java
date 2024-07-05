@@ -26,7 +26,7 @@ public class ModRegistry {
     public static final Holder.Reference<MenuType<TradingPostMenu>> TRADING_POST_MENU_TYPE = REGISTRY.registerMenuType("trading_post", () -> TradingPostMenu::new);
 
     static final BoundTagFactory TAGS = BoundTagFactory.make(TradingPost.MOD_ID);
-    public static final TagKey<EntityType<?>> CONCEALED_TRADERS_ENTITY_TYPE_TAG = TAGS.registerEntityTypeTag("concealed_traders");
+    public static final TagKey<EntityType<?>> EXCLUDE_FROM_TRADING_POST_ENTITY_TYPE_TAG = TAGS.registerEntityTypeTag("exclude_from_trading_post");
 
     public static void touch() {
 

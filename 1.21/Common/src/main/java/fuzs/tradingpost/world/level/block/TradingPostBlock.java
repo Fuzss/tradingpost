@@ -12,7 +12,6 @@ import fuzs.tradingpost.world.level.block.entity.TradingPostBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.Entity;
@@ -21,7 +20,6 @@ import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.trading.Merchant;
 import net.minecraft.world.level.BlockGetter;
@@ -110,7 +108,7 @@ public class TradingPostBlock extends BaseEntityBlock implements SimpleWaterlogg
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult rayTraceResult) {
+    public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
         if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         } else {
@@ -123,7 +121,7 @@ public class TradingPostBlock extends BaseEntityBlock implements SimpleWaterlogg
                 MerchantCollection merchants = new MerchantCollection(access);
                 for (Entity merchant : traders) {
                     if (merchant instanceof Villager) {
-                        ((VillagerAccessor) merchant).callUpdateSpecialPrices(player);
+                        ((VillagerAccessor) merchant).tradingpost$callUpdateSpecialPrices(player);
                     }
                     merchants.addMerchant(merchant.getId(), (Merchant) merchant);
                 }
@@ -144,12 +142,13 @@ public class TradingPostBlock extends BaseEntityBlock implements SimpleWaterlogg
             } else {
                 player.displayClientMessage(MISSING_MERCHANT_COMPONENT, false);
             }
+
             return InteractionResult.CONSUME;
         }
     }
 
     public static boolean isAllowedToTrade(Entity entity) {
-        if (entity.getType().is(ModRegistry.CONCEALED_TRADERS_ENTITY_TYPE_TAG)) {
+        if (entity.getType().is(ModRegistry.EXCLUDE_FROM_TRADING_POST_ENTITY_TYPE_TAG)) {
             return false;
         }
 
@@ -161,21 +160,12 @@ public class TradingPostBlock extends BaseEntityBlock implements SimpleWaterlogg
     }
 
     @Override
-    public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity entity, ItemStack stack) {
-        if (stack.hasCustomHoverName()) {
-            if (level.getBlockEntity(pos) instanceof TradingPostBlockEntity blockEntity) {
-                blockEntity.setCustomName(stack.getHoverName());
-            }
-        }
-    }
-
-    @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(WATERLOGGED);
     }
 
     @Override
-    public boolean isPathfindable(BlockState state, BlockGetter blockReader, BlockPos pos, PathComputationType pathType) {
+    public boolean isPathfindable(BlockState state, PathComputationType pathType) {
         return false;
     }
 }

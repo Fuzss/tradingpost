@@ -3,7 +3,11 @@ package fuzs.tradingpost.world.level.block.entity;
 import fuzs.puzzleslib.api.block.v1.entity.TickingBlockEntity;
 import fuzs.tradingpost.init.ModRegistry;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.Nameable;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -23,18 +27,18 @@ public class TradingPostBlockEntity extends BlockEntity implements Nameable, Tic
     }
 
     @Override
-    protected void saveAdditional(CompoundTag compoundTag) {
-        super.saveAdditional(compoundTag);
+    protected void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider registries) {
+        super.saveAdditional(compoundTag, registries);
         if (this.hasCustomName()) {
-            compoundTag.putString("CustomName", Component.Serializer.toJson(this.name));
+            compoundTag.putString("CustomName", Component.Serializer.toJson(this.name, registries));
         }
     }
 
     @Override
-    public void load(CompoundTag compoundTag) {
-        super.load(compoundTag);
-        if (compoundTag.contains("CustomName", 8)) {
-            this.name = Component.Serializer.fromJson(compoundTag.getString("CustomName"));
+    public void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider registries) {
+        super.loadAdditional(compoundTag, registries);
+        if (compoundTag.contains("CustomName", Tag.TAG_STRING)) {
+            this.name = parseCustomNameSafe(compoundTag.getString("CustomName"), registries);
         }
     }
 
@@ -60,5 +64,22 @@ public class TradingPostBlockEntity extends BlockEntity implements Nameable, Tic
     @Override
     public Component getCustomName() {
         return this.name;
+    }
+
+    @Override
+    protected void applyImplicitComponents(BlockEntity.DataComponentInput componentInput) {
+        super.applyImplicitComponents(componentInput);
+        this.name = componentInput.get(DataComponents.CUSTOM_NAME);
+    }
+
+    @Override
+    protected void collectImplicitComponents(DataComponentMap.Builder components) {
+        super.collectImplicitComponents(components);
+        components.set(DataComponents.CUSTOM_NAME, this.name);
+    }
+
+    @Override
+    public void removeComponentsFromTag(CompoundTag tag) {
+        tag.remove("CustomName");
     }
 }

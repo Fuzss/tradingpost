@@ -1,6 +1,7 @@
 package fuzs.tradingpost.client.gui.screens.inventory;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import fuzs.puzzleslib.api.core.v1.utility.ResourceLocationHelper;
 import fuzs.tradingpost.TradingPost;
 import fuzs.tradingpost.client.TradingPostClient;
 import fuzs.tradingpost.mixin.client.accessor.ButtonAccessor;
@@ -32,10 +33,10 @@ import java.util.Objects;
 
 public class TradingPostScreen extends MerchantScreen {
     public static final ResourceLocation MAGNIFYING_GLASS_LOCATION = TradingPost.id("container/villager/magnifying_glass");
-    private static final ResourceLocation VILLAGER_LOCATION = new ResourceLocation("textures/gui/container/villager.png");
-    private static final ResourceLocation OUT_OF_STOCK_SPRITE = new ResourceLocation("container/villager/out_of_stock");
-    private static final ResourceLocation DISCOUNT_STRIKETHRUOGH_SPRITE = new ResourceLocation("container/villager/discount_strikethrough");
-    private static final ResourceLocation CREATIVE_INVENTORY_LOCATION = new ResourceLocation("textures/gui/container/creative_inventory/tab_item_search.png");
+    private static final ResourceLocation VILLAGER_LOCATION = ResourceLocationHelper.withDefaultNamespace("textures/gui/container/villager.png");
+    private static final ResourceLocation OUT_OF_STOCK_SPRITE = ResourceLocationHelper.withDefaultNamespace("container/villager/out_of_stock");
+    private static final ResourceLocation DISCOUNT_STRIKETHRUOGH_SPRITE = ResourceLocationHelper.withDefaultNamespace("container/villager/discount_strikethrough");
+    private static final ResourceLocation CREATIVE_INVENTORY_LOCATION = ResourceLocationHelper.withDefaultNamespace("textures/gui/container/creative_inventory/tab_item_search.png");
     public static final Component DEPRECATED_TRADE_COMPONENT = Component.translatable("merchant.deprecated");
     public static final Component MERCHANT_UNAVAILABLE_COMPONENT = Component.translatable("trading_post.trader_gone");
 
@@ -332,7 +333,7 @@ public class TradingPostScreen extends MerchantScreen {
         this.getMenu().setSelectionHint(-1);
         this.getMenu().getTraders().setActiveOffer(null);
         this.getMenu().clearPaymentSlots();
-        TradingPost.NETWORK.sendToServer(new C2SClearSlotsMessage());
+        TradingPost.NETWORK.sendToServer(new C2SClearSlotsMessage().toServerboundMessage());
     }
 
     @Override

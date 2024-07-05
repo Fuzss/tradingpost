@@ -7,15 +7,13 @@ import fuzs.tradingpost.client.TradingPostClient;
 import fuzs.tradingpost.data.client.ModLanguageProvider;
 import fuzs.tradingpost.data.client.ModModelProvider;
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.event.lifecycle.FMLConstructModEvent;
 
-@Mod.EventBusSubscriber(modid = TradingPost.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@Mod(value = TradingPost.MOD_ID, dist = Dist.CLIENT)
 public class TradingPostNeoForgeClient {
 
-    @SubscribeEvent
-    public static void onConstructMod(final FMLConstructModEvent evt) {
+    public TradingPostNeoForgeClient(ModContainer modContainer) {
         ClientModConstructor.construct(TradingPost.MOD_ID, TradingPostClient::new);
         DataProviderHelper.registerDataProviders(TradingPost.MOD_ID,
                 ModLanguageProvider::new,
