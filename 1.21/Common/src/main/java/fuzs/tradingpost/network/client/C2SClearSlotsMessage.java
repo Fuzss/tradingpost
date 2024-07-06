@@ -10,12 +10,12 @@ public class C2SClearSlotsMessage implements MessageV2<C2SClearSlotsMessage> {
 
     @Override
     public void write(FriendlyByteBuf buf) {
-
+        // NO-OP
     }
 
     @Override
     public void read(FriendlyByteBuf buf) {
-
+        // NO-OP
     }
 
     @Override

@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class TradingPostBlockEntity extends BlockEntity implements Nameable, TickingBlockEntity {
     public static final Component CONTAINER_COMPONENT = Component.translatable("container.trading_post");
+    public static final String TAG_CUSTOM_NAME = "CustomName";
 
     private final TradingPostAnimationController animationController;
     @Nullable
@@ -30,15 +31,15 @@ public class TradingPostBlockEntity extends BlockEntity implements Nameable, Tic
     protected void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider registries) {
         super.saveAdditional(compoundTag, registries);
         if (this.hasCustomName()) {
-            compoundTag.putString("CustomName", Component.Serializer.toJson(this.name, registries));
+            compoundTag.putString(TAG_CUSTOM_NAME, Component.Serializer.toJson(this.name, registries));
         }
     }
 
     @Override
     public void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider registries) {
         super.loadAdditional(compoundTag, registries);
-        if (compoundTag.contains("CustomName", Tag.TAG_STRING)) {
-            this.name = parseCustomNameSafe(compoundTag.getString("CustomName"), registries);
+        if (compoundTag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING)) {
+            this.name = parseCustomNameSafe(compoundTag.getString(TAG_CUSTOM_NAME), registries);
         }
     }
 
@@ -80,6 +81,6 @@ public class TradingPostBlockEntity extends BlockEntity implements Nameable, Tic
 
     @Override
     public void removeComponentsFromTag(CompoundTag tag) {
-        tag.remove("CustomName");
+        tag.remove(TAG_CUSTOM_NAME);
     }
 }

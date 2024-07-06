@@ -1,6 +1,7 @@
 package fuzs.tradingpost.client.gui.screens.inventory;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import fuzs.puzzleslib.api.client.searchtree.v1.SearchRegistryHelper;
 import fuzs.puzzleslib.api.core.v1.utility.ResourceLocationHelper;
 import fuzs.tradingpost.TradingPost;
 import fuzs.tradingpost.client.TradingPostClient;
@@ -325,8 +326,8 @@ public class TradingPostScreen extends MerchantScreen {
         if (query.isEmpty()) {
             offers.clearFilter();
         } else {
-            SearchTree<MerchantOffer> isearchtree = this.minecraft.getSearchTree(TradingPostClient.OFFER_SEARCH_TREE);
-            offers.setFilter(isearchtree.search(query.toLowerCase(Locale.ROOT)));
+            SearchTree<MerchantOffer> searchTree = SearchRegistryHelper.getSearchTree(TradingPostClient.MERCHANT_OFFERS_SEARCH_TREE);
+            offers.setFilter(searchTree.search(query.toLowerCase(Locale.ROOT)));
         }
         ((MerchantScreenAccessor) this).tradingpost$setScrollOff(0);
         ((MerchantScreenAccessor) this).tradingpost$setShopItem(0);

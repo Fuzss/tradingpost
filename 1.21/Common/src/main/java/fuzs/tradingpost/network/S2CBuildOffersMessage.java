@@ -1,5 +1,6 @@
 package fuzs.tradingpost.network;
 
+import fuzs.puzzleslib.api.client.searchtree.v1.SearchRegistryHelper;
 import fuzs.puzzleslib.api.network.v2.MessageV2;
 import fuzs.tradingpost.client.TradingPostClient;
 import fuzs.tradingpost.client.gui.screens.inventory.TradingPostScreen;
@@ -15,7 +16,7 @@ public class S2CBuildOffersMessage implements MessageV2<S2CBuildOffersMessage> {
     private Int2IntOpenHashMap idToOfferCount;
 
     public S2CBuildOffersMessage() {
-
+        // NO-OP
     }
 
     public S2CBuildOffersMessage(int containerId, Int2IntOpenHashMap idToOfferCount) {
@@ -53,7 +54,7 @@ public class S2CBuildOffersMessage implements MessageV2<S2CBuildOffersMessage> {
                 Minecraft minecraft = (Minecraft) gameInstance;
                 if (message.containerId == player.containerMenu.containerId && player.containerMenu instanceof TradingPostMenu playerMenu && minecraft.screen instanceof TradingPostScreen screen) {
                     playerMenu.getTraders().buildOffers(message.idToOfferCount);
-                    minecraft.populateSearchTree(TradingPostClient.OFFER_SEARCH_TREE, playerMenu.getOffers());
+                    SearchRegistryHelper.populateSearchTree(TradingPostClient.MERCHANT_OFFERS_SEARCH_TREE, playerMenu.getOffers());
                     screen.refreshSearchResults();
                 }
             }

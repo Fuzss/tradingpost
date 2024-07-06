@@ -13,6 +13,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.Merchant;
 import net.minecraft.world.item.trading.MerchantOffers;
@@ -154,8 +155,8 @@ public class TradingPostMenu extends MerchantMenu {
         this.lockOffers = lock;
     }
 
-    public void addMerchant(Player playerEntity, int merchantId, Component merchantTitle, MerchantOffers offers, int villagerLevel, int villagerXp, boolean showProgress, boolean canRestock) {
-        LocalMerchant merchant = new LocalMerchant(playerEntity, merchantTitle, offers, villagerLevel, villagerXp, showProgress, canRestock);
+    public void addMerchant(Player player, int merchantId, Component merchantTitle, MerchantOffers offers, int villagerLevel, int villagerXp, boolean showProgress, boolean canRestock) {
+        LocalMerchant merchant = new LocalMerchant(player, merchantTitle, offers, villagerLevel, villagerXp, showProgress, canRestock);
         this.traders.addMerchant(merchantId, merchant);
     }
 
@@ -176,31 +177,26 @@ public class TradingPostMenu extends MerchantMenu {
 
     @Override
     public void setShowProgressBar(boolean showProgressBar) {
-        // Don't throw to not break other mods possibly interfering with the merchant menu.
-        TradingPost.LOGGER.error("Operation setShowProgressBar no supported on trading post, set showProgressBar to merchants directly");
+        // NO-OP
     }
 
     @Override
     public void setXp(int xpValue) {
-        // Don't throw to not break other mods possibly interfering with the merchant menu.
-        TradingPost.LOGGER.error("Operation setXp no supported on trading post, set xp to merchants directly");
+        // NO-OP
     }
 
     @Override
     public void setMerchantLevel(int merchantLevel) {
-        // Don't throw to not break other mods possibly interfering with the merchant menu.
-        TradingPost.LOGGER.error("Operation setMerchantLevel no supported on trading post, set level to merchants directly");
+        // NO-OP
     }
 
     @Override
     public void setCanRestock(boolean canRestock) {
-        // Don't throw to not break other mods possibly interfering with the merchant menu.
-        TradingPost.LOGGER.error("Operation setCanRestock no supported on trading post, set canRestock to merchants directly");
+        // NO-OP
     }
 
     @Override
     public void setOffers(MerchantOffers offers) {
-        // Don't throw to not break other mods possibly interfering with the merchant menu.
-        TradingPost.LOGGER.error("Operation setOffers no supported on trading post, set offers to merchants directly");
+        // NO-OP
     }
 }

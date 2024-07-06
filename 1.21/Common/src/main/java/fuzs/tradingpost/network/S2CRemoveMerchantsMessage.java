@@ -13,7 +13,7 @@ public class S2CRemoveMerchantsMessage implements MessageV2<S2CRemoveMerchantsMe
     private IntSet merchantIds;
 
     public S2CRemoveMerchantsMessage() {
-
+        // NO-OP
     }
 
     public S2CRemoveMerchantsMessage(int containerId, IntSet merchantIds) {
