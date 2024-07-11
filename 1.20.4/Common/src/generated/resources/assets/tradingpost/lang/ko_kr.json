@@ -1,0 +1,6 @@
+{
+    "block.tradingpost.trading_post": "교역소",
+    "container.trading_post": "교역소",
+    "trading_post.no_trader_found": "주변에 거래 가능한 상인을 찾을 수 없습니다",
+    "trading_post.trader_gone": "상인을 더 이상 이용할 수 없습니다"
+}
