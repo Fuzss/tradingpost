@@ -17,14 +17,14 @@ public class ModRecipeProvider extends AbstractRecipeProvider {
 
     @Override
     public void addRecipes(RecipeOutput recipeOutput) {
-        ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, ModRegistry.TRADING_POST_BLOCK.value())
+        ShapedRecipeBuilder.shaped(this.items(), RecipeCategory.DECORATIONS, ModRegistry.TRADING_POST_BLOCK.value())
                 .define('#', ItemTags.PLANKS)
                 .define('X', Items.EMERALD)
                 .define('S', Items.STICK)
                 .pattern(" X ")
                 .pattern("###")
                 .pattern("S S")
-                .unlockedBy(getHasName(Items.EMERALD), has(Items.EMERALD))
+                .unlockedBy(getHasName(Items.EMERALD), this.has(Items.EMERALD))
                 .save(recipeOutput);
     }
 }

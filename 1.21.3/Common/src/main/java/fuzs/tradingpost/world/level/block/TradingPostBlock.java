@@ -12,6 +12,7 @@ import fuzs.tradingpost.world.level.block.entity.TradingPostBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.Entity;
@@ -24,7 +25,8 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.trading.Merchant;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
@@ -84,11 +86,19 @@ public class TradingPostBlock extends BaseEntityBlock implements SimpleWaterlogg
     }
 
     @Override
-    public BlockState updateShape(BlockState state, Direction direction, BlockState oldState, LevelAccessor level, BlockPos newPos, BlockPos oldPos) {
-        if (state.getValue(WATERLOGGED)) {
-            level.scheduleTick(newPos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
+    protected BlockState updateShape(BlockState blockState, LevelReader levelReader, ScheduledTickAccess scheduledTickAccess, BlockPos blockPos, Direction direction, BlockPos neighborBlockPos, BlockState neighborBlockState, RandomSource randomSource) {
+        if (blockState.getValue(WATERLOGGED)) {
+            scheduledTickAccess.scheduleTick(blockPos, Fluids.WATER, Fluids.WATER.getTickDelay(levelReader));
         }
-        return super.updateShape(state, direction, oldState, level, newPos, oldPos);
+
+        return super.updateShape(blockState,
+                levelReader,
+                scheduledTickAccess,
+                blockPos,
+                direction,
+                neighborBlockPos,
+                neighborBlockState,
+                randomSource);
     }
 
     @Override
@@ -115,7 +125,10 @@ public class TradingPostBlock extends BaseEntityBlock implements SimpleWaterlogg
             Vec3 atCenter = Vec3.atCenterOf(pos);
             final int horizontalRange = TradingPost.CONFIG.get(ServerConfig.class).horizontalRange;
             final int verticalRange = TradingPost.CONFIG.get(ServerConfig.class).verticalRange;
-            List<Entity> traders = level.getEntitiesOfClass(Entity.class, new AABB(atCenter.add(-horizontalRange, -verticalRange, -horizontalRange), atCenter.add(horizontalRange, verticalRange, horizontalRange)), TradingPostBlock::isAllowedToTrade);
+            List<Entity> traders = level.getEntitiesOfClass(Entity.class,
+                    new AABB(atCenter.add(-horizontalRange, -verticalRange, -horizontalRange),
+                            atCenter.add(horizontalRange, verticalRange, horizontalRange)),
+                    TradingPostBlock::isAllowedToTrade);
             if (!traders.isEmpty()) {
                 ContainerLevelAccess access = ContainerLevelAccess.create(level, pos);
                 MerchantCollection merchants = new MerchantCollection(access);
@@ -128,9 +141,9 @@ public class TradingPostBlock extends BaseEntityBlock implements SimpleWaterlogg
                 merchants.setTradingPlayer(player);
                 merchants.buildOffers(merchants.getIdToOfferCountMap());
                 Component title;
-                if (level.getBlockEntity(pos) instanceof TradingPostBlockEntity blockEntity)
+                if (level.getBlockEntity(pos) instanceof TradingPostBlockEntity blockEntity) {
                     title = blockEntity.getDisplayName();
-                else {
+                } else {
                     title = TradingPostBlockEntity.CONTAINER_COMPONENT;
                 }
                 OptionalInt result = player.openMenu(new SimpleMenuProvider((int containerId, Inventory inventory, Player containerPlayer) -> {
@@ -152,7 +165,8 @@ public class TradingPostBlock extends BaseEntityBlock implements SimpleWaterlogg
             return false;
         }
 
-        if (!entity.isAlive() || !(entity instanceof Merchant merchant) || merchant.getTradingPlayer() != null || merchant.getOffers().isEmpty()) {
+        if (!entity.isAlive() || !(entity instanceof Merchant merchant) || merchant.getTradingPlayer() != null ||
+                merchant.getOffers().isEmpty()) {
             return false;
         }
 

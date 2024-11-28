@@ -1,7 +1,7 @@
 package fuzs.tradingpost.init;
 
 import fuzs.puzzleslib.api.init.v3.registry.RegistryManager;
-import fuzs.puzzleslib.api.init.v3.tags.BoundTagFactory;
+import fuzs.puzzleslib.api.init.v3.tags.TagFactory;
 import fuzs.tradingpost.TradingPost;
 import fuzs.tradingpost.world.inventory.TradingPostMenu;
 import fuzs.tradingpost.world.level.block.TradingPostBlock;
@@ -19,16 +19,29 @@ import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
 
 public class ModRegistry {
-    static final RegistryManager REGISTRY = RegistryManager.from(TradingPost.MOD_ID);
-    public static final Holder.Reference<Block> TRADING_POST_BLOCK = REGISTRY.registerBlock("trading_post", () -> new TradingPostBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).instrument(NoteBlockInstrument.BASS).strength(2.5F).sound(SoundType.WOOD).ignitedByLava()));
-    public static final Holder.Reference<Item> TRADING_POST_ITEM = REGISTRY.registerBlockItem(TRADING_POST_BLOCK);
-    public static final Holder.Reference<BlockEntityType<TradingPostBlockEntity>> TRADING_POST_BLOCK_ENTITY_TYPE = REGISTRY.registerBlockEntityType("trading_post", () -> BlockEntityType.Builder.of(TradingPostBlockEntity::new, TRADING_POST_BLOCK.value()));
-    public static final Holder.Reference<MenuType<TradingPostMenu>> TRADING_POST_MENU_TYPE = REGISTRY.registerMenuType("trading_post", () -> TradingPostMenu::new);
+    static final RegistryManager REGISTRIES = RegistryManager.from(TradingPost.MOD_ID);
+    public static final Holder.Reference<Block> TRADING_POST_BLOCK = REGISTRIES.registerBlock("trading_post",
+            TradingPostBlock::new,
+            () -> BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.WOOD)
+                    .instrument(NoteBlockInstrument.BASS)
+                    .strength(2.5F)
+                    .sound(SoundType.WOOD)
+                    .ignitedByLava());
+    public static final Holder.Reference<Item> TRADING_POST_ITEM = REGISTRIES.registerBlockItem(TRADING_POST_BLOCK);
+    public static final Holder.Reference<BlockEntityType<TradingPostBlockEntity>> TRADING_POST_BLOCK_ENTITY_TYPE = REGISTRIES.registerBlockEntityType(
+            "trading_post",
+            TradingPostBlockEntity::new,
+            TRADING_POST_BLOCK);
+    public static final Holder.Reference<MenuType<TradingPostMenu>> TRADING_POST_MENU_TYPE = REGISTRIES.registerMenuType(
+            "trading_post",
+            () -> TradingPostMenu::new);
 
-    static final BoundTagFactory TAGS = BoundTagFactory.make(TradingPost.MOD_ID);
-    public static final TagKey<EntityType<?>> EXCLUDE_FROM_TRADING_POST_ENTITY_TYPE_TAG = TAGS.registerEntityTypeTag("exclude_from_trading_post");
+    static final TagFactory TAGS = TagFactory.make(TradingPost.MOD_ID);
+    public static final TagKey<EntityType<?>> EXCLUDE_FROM_TRADING_POST_ENTITY_TYPE_TAG = TAGS.registerEntityTypeTag(
+            "exclude_from_trading_post");
 
-    public static void touch() {
-
+    public static void bootstrap() {
+        // NO-OP
     }
 }
