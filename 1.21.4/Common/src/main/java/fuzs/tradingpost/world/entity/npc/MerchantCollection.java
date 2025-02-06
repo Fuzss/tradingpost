@@ -126,6 +126,12 @@ public class MerchantCollection implements Merchant {
     }
 
     @Override
+    public boolean stillValid(Player player) {
+        // we already implement this on the container menu, so this should never be called
+        return true;
+    }
+
+    @Override
     public int getVillagerXp() {
         if (this.currentMerchant != null) {
             return this.currentMerchant.getVillagerXp();

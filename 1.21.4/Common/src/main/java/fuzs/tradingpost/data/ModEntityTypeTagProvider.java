@@ -15,6 +15,6 @@ public class ModEntityTypeTagProvider extends AbstractTagProvider<EntityType<?>>
 
     @Override
     public void addTags(HolderLookup.Provider provider) {
-        this.add(ModRegistry.EXCLUDE_FROM_TRADING_POST_ENTITY_TYPE_TAG);
+        this.tag(ModRegistry.EXCLUDE_FROM_TRADING_POST_ENTITY_TYPE_TAG);
     }
 }
