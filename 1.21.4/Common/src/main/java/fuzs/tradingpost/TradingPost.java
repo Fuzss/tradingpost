@@ -2,9 +2,9 @@ package fuzs.tradingpost;
 
 import fuzs.puzzleslib.api.config.v3.ConfigHolder;
 import fuzs.puzzleslib.api.core.v1.ModConstructor;
+import fuzs.puzzleslib.api.core.v1.context.FuelValuesContext;
 import fuzs.puzzleslib.api.core.v1.utility.ResourceLocationHelper;
 import fuzs.puzzleslib.api.event.v1.BuildCreativeModeTabContentsCallback;
-import fuzs.puzzleslib.api.event.v1.server.RegisterFuelValuesCallback;
 import fuzs.puzzleslib.api.network.v3.NetworkHandler;
 import fuzs.tradingpost.config.ServerConfig;
 import fuzs.tradingpost.init.ModRegistry;
@@ -37,13 +37,15 @@ public class TradingPost implements ModConstructor {
     }
 
     private static void registerEventHandlers() {
-        RegisterFuelValuesCallback.EVENT.register((builder, fuelBaseValue) -> {
-            builder.add(ModRegistry.TRADING_POST_BLOCK.value(), fuelBaseValue * 3 / 2);
-        });
         BuildCreativeModeTabContentsCallback.buildCreativeModeTabContents(CreativeModeTabs.FUNCTIONAL_BLOCKS)
                 .register((CreativeModeTab creativeModeTab, CreativeModeTab.ItemDisplayParameters itemDisplayParameters, CreativeModeTab.Output output) -> {
                     output.accept(ModRegistry.TRADING_POST_ITEM.value());
                 });
+    }
+
+    @Override
+    public void onRegisterFuelValues(FuelValuesContext context) {
+        context.registerFuel(ModRegistry.TRADING_POST_BLOCK, context.fuelBaseValue() * 3 / 2);
     }
 
     public static ResourceLocation id(String path) {
