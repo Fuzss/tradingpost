@@ -9,6 +9,7 @@ import fuzs.tradingpost.world.entity.npc.MerchantCollection;
 import fuzs.tradingpost.world.level.block.TradingPostBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
@@ -61,7 +62,7 @@ public class TradingPostMenu extends MerchantMenu {
         // don't want this to go off on every tick
         Optional<Boolean> anyTrader = this.access.evaluate((Level level, BlockPos pos) -> {
             boolean testRange = TradingPost.CONFIG.get(ServerConfig.class).enforceRange && ++this.ticks >= 20;
-            return this.traders.updateAvailableMerchants(this.containerId, pos, player, testRange);
+            return this.traders.updateAvailableMerchants((ServerPlayer) player, this.containerId, pos, testRange);
         });
         if (this.ticks >= 20) this.ticks = 0;
         if (TradingPost.CONFIG.get(ServerConfig.class).closeScreen && anyTrader.isPresent() && !anyTrader.get()) {
@@ -117,7 +118,15 @@ public class TradingPostMenu extends MerchantMenu {
         if (!this.traders.isClientSide()) {
             Merchant merchant = this.traders.getCurrentMerchant();
             if (merchant instanceof Entity entity) {
-                entity.level().playLocalSound(entity.getX(), entity.getY(), entity.getZ(), this.traders.getNotifyTradeSound(), SoundSource.NEUTRAL, 1.0F, 1.0F, false);
+                entity.level()
+                        .playLocalSound(entity.getX(),
+                                entity.getY(),
+                                entity.getZ(),
+                                this.traders.getNotifyTradeSound(),
+                                SoundSource.NEUTRAL,
+                                1.0F,
+                                1.0F,
+                                false);
             }
         }
     }
@@ -156,7 +165,13 @@ public class TradingPostMenu extends MerchantMenu {
     }
 
     public void addMerchant(Player player, int merchantId, Component merchantTitle, MerchantOffers offers, int villagerLevel, int villagerXp, boolean showProgress, boolean canRestock) {
-        LocalMerchant merchant = new LocalMerchant(player, merchantTitle, offers, villagerLevel, villagerXp, showProgress, canRestock);
+        LocalMerchant merchant = new LocalMerchant(player,
+                merchantTitle,
+                offers,
+                villagerLevel,
+                villagerXp,
+                showProgress,
+                canRestock);
         this.traders.addMerchant(merchantId, merchant);
     }
 

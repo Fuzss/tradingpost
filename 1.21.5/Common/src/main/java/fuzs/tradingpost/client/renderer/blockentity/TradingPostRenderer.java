@@ -14,9 +14,12 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 /**
- * Mostly copied from Quark's <a href="https://github.com/VazkiiMods/Quark/blob/master/src/main/java/vazkii/quark/addons/oddities/client/render/be/MatrixEnchantingTableRenderer.java">MatrixEnchantingTableRenderer.java</a> by Vazkii, thanks!
+ * Mostly copied from Quark's <a
+ * href="https://github.com/VazkiiMods/Quark/blob/master/src/main/java/vazkii/quark/addons/oddities/client/render/be/MatrixEnchantingTableRenderer.java">MatrixEnchantingTableRenderer.java</a>
+ * by Vazkii, thanks!
  */
 public class TradingPostRenderer implements BlockEntityRenderer<TradingPostBlockEntity> {
     private static final ItemStack ITEM_STACK = new ItemStack(Items.EMERALD);
@@ -28,11 +31,10 @@ public class TradingPostRenderer implements BlockEntityRenderer<TradingPostBlock
     }
 
     @Override
-    public void render(TradingPostBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, int packedOverlay) {
+    public void render(TradingPostBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, int packedOverlay, Vec3 cameraPosition) {
         // light is normally always 0 since it checks inside the crafting table block which is solid, but contents are rendered in the block above
         packedLight = blockEntity.getLevel() != null ?
-                LevelRenderer.getLightColor(blockEntity.getLevel(), blockEntity.getBlockPos().above()) :
-                15728880;
+                LevelRenderer.getLightColor(blockEntity.getLevel(), blockEntity.getBlockPos().above()) : 15728880;
         TradingPostAnimationController animationController = blockEntity.getAnimationController();
         float ageInTicks = animationController.time + partialTick;
         float nextRotation = animationController.rot - animationController.oRot;
@@ -52,8 +54,7 @@ public class TradingPostRenderer implements BlockEntityRenderer<TradingPostBlock
                 multiBufferSource,
                 packedLight,
                 packedOverlay,
-                blockEntity.getLevel()
-        );
+                blockEntity.getLevel());
     }
 
     private void renderItem(ItemStack itemStack, float ageInTicks, float bookOpen, float bookRotation, PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, int packedOverlay, Level level) {
@@ -75,8 +76,7 @@ public class TradingPostRenderer implements BlockEntityRenderer<TradingPostBlock
                 poseStack,
                 multiBufferSource,
                 level,
-                0
-        );
+                0);
         poseStack.popPose();
     }
 }

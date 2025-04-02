@@ -2,11 +2,13 @@ package fuzs.tradingpost.world.entity.npc;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import fuzs.puzzleslib.api.network.v4.MessageSender;
+import fuzs.puzzleslib.api.network.v4.PlayerSet;
 import fuzs.tradingpost.TradingPost;
 import fuzs.tradingpost.config.ServerConfig;
-import fuzs.tradingpost.network.S2CBuildOffersMessage;
-import fuzs.tradingpost.network.S2CMerchantDataMessage;
-import fuzs.tradingpost.network.S2CRemoveMerchantsMessage;
+import fuzs.tradingpost.network.ClientboundBuildOffersMessage;
+import fuzs.tradingpost.network.ClientboundMerchantDataMessage;
+import fuzs.tradingpost.network.ClientboundRemoveMerchantsMessage;
 import fuzs.tradingpost.world.item.trading.TradingPostOffers;
 import fuzs.tradingpost.world.level.block.entity.TradingPostBlockEntity;
 import it.unimi.dsi.fastutil.ints.*;
@@ -102,10 +104,17 @@ public class MerchantCollection implements Merchant {
 
                     Vec3 merchantPos = entity.position().add(0.0, 0.5, 0.0);
                     final double xpWidth = 0.5, xpHeight = 0.5;
-                    List<ExperienceOrb> xpRewards = level.getEntitiesOfClass(ExperienceOrb.class, new AABB(merchantPos.add(-xpWidth, -xpHeight, -xpWidth), merchantPos.add(xpWidth, xpHeight, xpWidth)), Entity::isAlive);
+                    List<ExperienceOrb> xpRewards = level.getEntitiesOfClass(ExperienceOrb.class,
+                            new AABB(merchantPos.add(-xpWidth, -xpHeight, -xpWidth),
+                                    merchantPos.add(xpWidth, xpHeight, xpWidth)),
+                            Entity::isAlive);
                     // move xp would be much nicer, unfortunately it'd only be moved on the server, so orbs need to be removed and spawned in again
                     for (ExperienceOrb xpOrb : xpRewards) {
-                        level.addFreshEntity(new ExperienceOrb(level, pos.getX(), pos.getY() + 1.5, pos.getZ(), xpOrb.getValue()));
+                        level.addFreshEntity(new ExperienceOrb(level,
+                                pos.getX(),
+                                pos.getY() + 1.5,
+                                pos.getZ(),
+                                xpOrb.getValue()));
                         xpOrb.discard();
                     }
                 }
@@ -181,7 +190,7 @@ public class MerchantCollection implements Merchant {
             if (merchant instanceof LocalMerchant) {
                 return ((LocalMerchant) merchant).getMerchantLevel();
             } else if (merchant instanceof VillagerDataHolder) {
-                return ((VillagerDataHolder) merchant).getVillagerData().getLevel();
+                return ((VillagerDataHolder) merchant).getVillagerData().level();
             }
         }
         return 0;
@@ -200,18 +209,20 @@ public class MerchantCollection implements Merchant {
         return null;
     }
 
-    public boolean updateAvailableMerchants(int containerId, BlockPos pos, Player player, boolean testRange) {
+    public boolean updateAvailableMerchants(ServerPlayer serverPlayer, int containerId, BlockPos pos, boolean testRange) {
         IntSet toRemove = new IntOpenHashSet();
         for (Map.Entry<Integer, Merchant> entry : this.idToMerchant.int2ObjectEntrySet()) {
             if (entry.getValue() instanceof Entity) {
-                if (entry.getValue().getTradingPlayer() != player || testRange && !this.traderInRange((Entity) entry.getValue(), pos)) {
+                if (entry.getValue().getTradingPlayer() != serverPlayer ||
+                        testRange && !this.traderInRange((Entity) entry.getValue(), pos)) {
                     toRemove.add(entry.getKey().intValue());
                 }
             }
         }
         if (!toRemove.isEmpty()) {
             toRemove.forEach((IntConsumer) this::removeMerchant);
-            TradingPost.NETWORK.sendTo((ServerPlayer) player, new S2CRemoveMerchantsMessage(containerId, toRemove).toClientboundMessage());
+            MessageSender.broadcast(PlayerSet.ofPlayer(serverPlayer),
+                    new ClientboundRemoveMerchantsMessage(containerId, toRemove));
         }
         return !this.idToMerchant.isEmpty();
     }
@@ -221,7 +232,9 @@ public class MerchantCollection implements Merchant {
     }
 
     private boolean traderInRange(Entity entity, double posX, double posY, double posZ) {
-        return Math.abs(entity.getX() - posX) <= TradingPost.CONFIG.get(ServerConfig.class).horizontalRange && Math.abs(entity.getY() - posY) <= TradingPost.CONFIG.get(ServerConfig.class).verticalRange && Math.abs(entity.getZ() - posZ) <= TradingPost.CONFIG.get(ServerConfig.class).horizontalRange;
+        return Math.abs(entity.getX() - posX) <= TradingPost.CONFIG.get(ServerConfig.class).horizontalRange &&
+                Math.abs(entity.getY() - posY) <= TradingPost.CONFIG.get(ServerConfig.class).verticalRange &&
+                Math.abs(entity.getZ() - posZ) <= TradingPost.CONFIG.get(ServerConfig.class).horizontalRange;
     }
 
     public void removeMerchant(int merchantId) {
@@ -242,20 +255,34 @@ public class MerchantCollection implements Merchant {
         }
     }
 
-    public void sendMerchantData(final int containerId, Player player) {
+    public void sendMerchantData(ServerPlayer serverPlayer, int containerId) {
         for (Map.Entry<Integer, Merchant> entry : this.idToMerchant.int2ObjectEntrySet()) {
             Merchant merchant = entry.getValue();
-            final Component merchantTitle = merchant instanceof Entity ? ((Entity) merchant).getDisplayName() : TradingPostBlockEntity.CONTAINER_COMPONENT;
-            final int merchantLevel = merchant instanceof VillagerDataHolder ? ((VillagerDataHolder) merchant).getVillagerData().getLevel() : 0;
-            S2CMerchantDataMessage message = new S2CMerchantDataMessage(containerId, entry.getKey(), merchantTitle, merchant.getOffers(), merchantLevel, merchant.getVillagerXp(), merchant.showProgressBar(), merchant.canRestock());
-            TradingPost.NETWORK.sendTo((ServerPlayer) player, message.toClientboundMessage());
+            final Component merchantTitle = merchant instanceof Entity ? ((Entity) merchant).getDisplayName() :
+                    TradingPostBlockEntity.CONTAINER_COMPONENT;
+            final int merchantLevel = merchant instanceof VillagerDataHolder villagerDataHolder ?
+                    villagerDataHolder.getVillagerData().level() : 0;
+            ClientboundMerchantDataMessage message = new ClientboundMerchantDataMessage(containerId,
+                    entry.getKey(),
+                    merchantTitle,
+                    merchant.getOffers(),
+                    merchantLevel,
+                    merchant.getVillagerXp(),
+                    merchant.showProgressBar(),
+                    merchant.canRestock());
+            MessageSender.broadcast(PlayerSet.ofPlayer(serverPlayer), message);
         }
-        TradingPost.NETWORK.sendTo((ServerPlayer) player, new S2CBuildOffersMessage(containerId, this.getIdToOfferCountMap()).toClientboundMessage());
+        MessageSender.broadcast(PlayerSet.ofPlayer(serverPlayer),
+                new ClientboundBuildOffersMessage(containerId, this.getIdToOfferCountMap()));
     }
 
     public Int2IntOpenHashMap getIdToOfferCountMap() {
-        return this.idToMerchant.int2ObjectEntrySet().stream()
-                .collect(Collectors.toMap(Int2ObjectMap.Entry::getIntKey, entry -> entry.getValue().getOffers().size(), (o1, o2) -> o1, Int2IntOpenHashMap::new));
+        return this.idToMerchant.int2ObjectEntrySet()
+                .stream()
+                .collect(Collectors.toMap(Int2ObjectMap.Entry::getIntKey,
+                        entry -> entry.getValue().getOffers().size(),
+                        (o1, o2) -> o1,
+                        Int2IntOpenHashMap::new));
     }
 
     public void buildOffers(Int2IntOpenHashMap idToOfferCount) {

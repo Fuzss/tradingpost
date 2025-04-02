@@ -12,6 +12,7 @@ import fuzs.tradingpost.world.level.block.entity.TradingPostBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
@@ -150,7 +151,7 @@ public class TradingPostBlock extends BaseEntityBlock implements SimpleWaterlogg
                     return new TradingPostMenu(containerId, inventory, merchants, access);
                 }, title));
                 result.ifPresent((int containerId) -> {
-                    merchants.sendMerchantData(containerId, player);
+                    merchants.sendMerchantData((ServerPlayer) player, containerId);
                 });
             } else {
                 player.displayClientMessage(MISSING_MERCHANT_COMPONENT, false);

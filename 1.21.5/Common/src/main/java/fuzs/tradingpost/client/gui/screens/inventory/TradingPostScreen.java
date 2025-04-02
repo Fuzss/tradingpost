@@ -3,12 +3,13 @@ package fuzs.tradingpost.client.gui.screens.inventory;
 import com.mojang.blaze3d.systems.RenderSystem;
 import fuzs.puzzleslib.api.client.searchtree.v1.SearchRegistryHelper;
 import fuzs.puzzleslib.api.core.v1.utility.ResourceLocationHelper;
+import fuzs.puzzleslib.api.network.v4.MessageSender;
 import fuzs.tradingpost.TradingPost;
 import fuzs.tradingpost.client.TradingPostClient;
 import fuzs.tradingpost.mixin.client.accessor.ButtonAccessor;
 import fuzs.tradingpost.mixin.client.accessor.MerchantScreenAccessor;
 import fuzs.tradingpost.mixin.client.accessor.TradeOfferButtonAccessor;
-import fuzs.tradingpost.network.client.C2SClearSlotsMessage;
+import fuzs.tradingpost.network.client.ServerboundClearSlotsMessage;
 import fuzs.tradingpost.world.inventory.TradingPostMenu;
 import fuzs.tradingpost.world.item.trading.TradingPostOffers;
 import fuzs.tradingpost.world.level.block.entity.TradingPostBlockEntity;
@@ -193,9 +194,7 @@ public class TradingPostScreen extends MerchantScreen {
 
                     if (!this.getMenu().getTraders().checkOffer(merchantoffer)) {
 
-                        RenderSystem.depthFunc(516);
                         guiGraphics.fill(posX, posY, posX + 88, posY + 20, 822083583);
-                        RenderSystem.depthFunc(515);
                     }
 
                     this.renderAndDecorateCostA(guiGraphics, posX, posY, baseCostA, costA);
@@ -244,7 +243,6 @@ public class TradingPostScreen extends MerchantScreen {
                     posY += 20;
                 }
             }
-            RenderSystem.enableDepthTest();
         }
 
         // move this out of if block above since search may update this
@@ -400,7 +398,7 @@ public class TradingPostScreen extends MerchantScreen {
         this.getMenu().setSelectionHint(-1);
         this.getMenu().getTraders().setActiveOffer(null);
         this.getMenu().clearPaymentSlots();
-        TradingPost.NETWORK.sendToServer(new C2SClearSlotsMessage().toServerboundMessage());
+        MessageSender.broadcast(new ServerboundClearSlotsMessage());
     }
 
     @Override

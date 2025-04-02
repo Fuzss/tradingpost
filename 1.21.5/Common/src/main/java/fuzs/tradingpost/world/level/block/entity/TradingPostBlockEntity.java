@@ -4,11 +4,13 @@ import fuzs.puzzleslib.api.block.v1.entity.TickingBlockEntity;
 import fuzs.tradingpost.init.ModRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.world.Nameable;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -31,15 +33,18 @@ public class TradingPostBlockEntity extends BlockEntity implements Nameable, Tic
     protected void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider registries) {
         super.saveAdditional(compoundTag, registries);
         if (this.hasCustomName()) {
-            compoundTag.putString(TAG_CUSTOM_NAME, Component.Serializer.toJson(this.name, registries));
+            compoundTag.store(TAG_CUSTOM_NAME,
+                    ComponentSerialization.CODEC,
+                    registries.createSerializationContext(NbtOps.INSTANCE),
+                    this.name);
         }
     }
 
     @Override
     public void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider registries) {
         super.loadAdditional(compoundTag, registries);
-        if (compoundTag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING)) {
-            this.name = parseCustomNameSafe(compoundTag.getString(TAG_CUSTOM_NAME), registries);
+        if (compoundTag.contains(TAG_CUSTOM_NAME)) {
+            this.name = parseCustomNameSafe(compoundTag.get(TAG_CUSTOM_NAME), registries);
         }
     }
 
@@ -68,9 +73,9 @@ public class TradingPostBlockEntity extends BlockEntity implements Nameable, Tic
     }
 
     @Override
-    protected void applyImplicitComponents(BlockEntity.DataComponentInput componentInput) {
-        super.applyImplicitComponents(componentInput);
-        this.name = componentInput.get(DataComponents.CUSTOM_NAME);
+    protected void applyImplicitComponents(DataComponentGetter dataComponentGetter) {
+        super.applyImplicitComponents(dataComponentGetter);
+        this.name = dataComponentGetter.get(DataComponents.CUSTOM_NAME);
     }
 
     @Override
