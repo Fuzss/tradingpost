@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": "#minecraft:planks",
+    "S": "minecraft:stick",
+    "X": "minecraft:emerald"
+  },
+  "pattern": [
+    " X ",
+    "###",
+    "S S"
+  ],
+  "result": {
+    "count": 1,
+    "id": "tradingpost:trading_post"
+  }
+}
