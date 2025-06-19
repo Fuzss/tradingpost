@@ -3,17 +3,16 @@ package fuzs.tradingpost.world.level.block.entity;
 import fuzs.puzzleslib.api.block.v1.entity.TickingBlockEntity;
 import fuzs.tradingpost.init.ModRegistry;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.world.Nameable;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
 
 public class TradingPostBlockEntity extends BlockEntity implements Nameable, TickingBlockEntity {
@@ -30,22 +29,15 @@ public class TradingPostBlockEntity extends BlockEntity implements Nameable, Tic
     }
 
     @Override
-    protected void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider registries) {
-        super.saveAdditional(compoundTag, registries);
-        if (this.hasCustomName()) {
-            compoundTag.store(TAG_CUSTOM_NAME,
-                    ComponentSerialization.CODEC,
-                    registries.createSerializationContext(NbtOps.INSTANCE),
-                    this.name);
-        }
+    protected void loadAdditional(ValueInput valueInput) {
+        super.loadAdditional(valueInput);
+        this.name = parseCustomNameSafe(valueInput, TAG_CUSTOM_NAME);
     }
 
     @Override
-    public void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider registries) {
-        super.loadAdditional(compoundTag, registries);
-        if (compoundTag.contains(TAG_CUSTOM_NAME)) {
-            this.name = parseCustomNameSafe(compoundTag.get(TAG_CUSTOM_NAME), registries);
-        }
+    protected void saveAdditional(ValueOutput valueOutput) {
+        super.saveAdditional(valueOutput);
+        valueOutput.storeNullable(TAG_CUSTOM_NAME, ComponentSerialization.CODEC, this.name);
     }
 
     @Override
@@ -85,7 +77,7 @@ public class TradingPostBlockEntity extends BlockEntity implements Nameable, Tic
     }
 
     @Override
-    public void removeComponentsFromTag(CompoundTag tag) {
-        tag.remove(TAG_CUSTOM_NAME);
+    public void removeComponentsFromTag(ValueOutput valueOutput) {
+        valueOutput.discard(TAG_CUSTOM_NAME);
     }
 }

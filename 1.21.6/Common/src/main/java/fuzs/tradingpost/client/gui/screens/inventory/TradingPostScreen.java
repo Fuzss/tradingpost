@@ -1,6 +1,5 @@
 package fuzs.tradingpost.client.gui.screens.inventory;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import fuzs.puzzleslib.api.client.searchtree.v1.SearchRegistryHelper;
 import fuzs.puzzleslib.api.core.v1.utility.ResourceLocationHelper;
 import fuzs.puzzleslib.api.network.v4.MessageSender;
@@ -18,7 +17,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.MerchantScreen;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.searchtree.SearchTree;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundSelectTradePacket;
@@ -69,8 +68,8 @@ public class TradingPostScreen extends MerchantScreen {
             ((ButtonAccessor) tradeOfferButton).tradingpost$setOnPress(button -> {
 
                 MerchantScreenAccessor accessor = (MerchantScreenAccessor) this;
-                int shopItem = ((TradeOfferButtonAccessor) button).tradingpost$getIndex() +
-                        accessor.tradingpost$getScrollOff();
+                int shopItem = ((TradeOfferButtonAccessor) button).tradingpost$getIndex()
+                        + accessor.tradingpost$getScrollOff();
                 MerchantOffers offers = this.getMenu().getOffers();
                 accessor.tradingpost$setShopItem(shopItem);
                 this.getMenu().setSelectionHint(shopItem);
@@ -91,7 +90,7 @@ public class TradingPostScreen extends MerchantScreen {
                 TradingPostBlockEntity.CONTAINER_COMPONENT);
         this.searchBox.setMaxLength(50);
         this.searchBox.setBordered(false);
-        this.searchBox.setTextColor(16777215);
+        this.searchBox.setTextColor(-1);
         this.addWidget(this.searchBox);
     }
 
@@ -120,13 +119,13 @@ public class TradingPostScreen extends MerchantScreen {
                 title,
                 (49 + this.imageWidth / 2 - this.font.width(title) / 2),
                 6,
-                0x404040,
+                0XFF404040,
                 false);
         guiGraphics.drawString(this.font,
                 this.playerInventoryTitle,
                 this.inventoryLabelX,
                 this.inventoryLabelY,
-                0x404040,
+                0XFF404040,
                 false);
     }
 
@@ -152,8 +151,7 @@ public class TradingPostScreen extends MerchantScreen {
 
                 MerchantOffer merchantoffer = merchantoffers.get(shopItemIndex);
                 if (merchantoffer.isOutOfStock()) {
-                    RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-                    guiGraphics.blitSprite(RenderType::guiTextured,
+                    guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED,
                             OUT_OF_STOCK_SPRITE,
                             this.leftPos + 83 + 99,
                             this.topPos + 35,
@@ -189,8 +187,6 @@ public class TradingPostScreen extends MerchantScreen {
                     ItemStack costA = merchantoffer.getCostA();
                     ItemStack costB = merchantoffer.getCostB();
                     ItemStack result = merchantoffer.getResult();
-                    guiGraphics.pose().pushPose();
-                    guiGraphics.pose().translate(0.0F, 0.0F, 100.0F);
 
                     if (!this.getMenu().getTraders().checkOffer(merchantoffer)) {
 
@@ -206,7 +202,6 @@ public class TradingPostScreen extends MerchantScreen {
 
                     guiGraphics.renderFakeItem(result, posX + 68, posY + 1);
                     guiGraphics.renderItemDecorations(this.font, result, posX + 68, posY + 1);
-                    guiGraphics.pose().popPose();
                     posY += 20;
                 }
             }
@@ -220,10 +215,10 @@ public class TradingPostScreen extends MerchantScreen {
                         activeOffer);
             }
 
-            if (activeOffer.isOutOfStock() && this.isHovering(186, 35, 22, 21, mouseX, mouseY) &&
-                    this.getMenu().canRestock()) {
+            if (activeOffer.isOutOfStock() && this.isHovering(186, 35, 22, 21, mouseX, mouseY) && this.getMenu()
+                    .canRestock()) {
 
-                guiGraphics.renderTooltip(this.font, DEPRECATED_TRADE_COMPONENT, mouseX, mouseY);
+                guiGraphics.setTooltipForNextFrame(this.font, DEPRECATED_TRADE_COMPONENT, mouseX, mouseY);
             }
 
             posY = this.topPos + 16 + 2;
@@ -236,7 +231,10 @@ public class TradingPostScreen extends MerchantScreen {
 
                         if (this.isHovering(posX, posY, 88, 19, mouseX + this.leftPos, mouseY + this.topPos)) {
 
-                            guiGraphics.renderTooltip(this.font, MERCHANT_UNAVAILABLE_COMPONENT, mouseX, mouseY);
+                            guiGraphics.setTooltipForNextFrame(this.font,
+                                    MERCHANT_UNAVAILABLE_COMPONENT,
+                                    mouseX,
+                                    mouseY);
                         }
                     }
 
@@ -276,15 +274,12 @@ public class TradingPostScreen extends MerchantScreen {
                     posX + 5 + 14,
                     posY + 1,
                     costA.getCount() == 1 ? "1" : null);
-            guiGraphics.pose().pushPose();
-            guiGraphics.pose().translate(0.0F, 0.0F, 300.0F);
-            guiGraphics.blitSprite(RenderType::guiTextured,
+            guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED,
                     DISCOUNT_STRIKETHRUOGH_SPRITE,
                     posX + 5 + 7,
                     posY + 1 + 12,
                     9,
                     2);
-            guiGraphics.pose().popPose();
         }
     }
 
@@ -313,7 +308,7 @@ public class TradingPostScreen extends MerchantScreen {
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
         super.renderBg(guiGraphics, partialTicks, mouseX, mouseY);
-        guiGraphics.blit(RenderType::guiTextured,
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED,
                 CREATIVE_INVENTORY_LOCATION,
                 this.leftPos + 11,
                 this.topPos + 4,
@@ -324,7 +319,7 @@ public class TradingPostScreen extends MerchantScreen {
                 256,
                 256);
         this.searchBox.render(guiGraphics, mouseX, mouseY, partialTicks);
-        guiGraphics.blitSprite(RenderType::guiTextured,
+        guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED,
                 MAGNIFYING_GLASS_LOCATION,
                 this.leftPos,
                 this.topPos + 4,

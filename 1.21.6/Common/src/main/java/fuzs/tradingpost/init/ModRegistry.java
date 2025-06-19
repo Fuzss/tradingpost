@@ -35,7 +35,7 @@ public class ModRegistry {
             TRADING_POST_BLOCK);
     public static final Holder.Reference<MenuType<TradingPostMenu>> TRADING_POST_MENU_TYPE = REGISTRIES.registerMenuType(
             "trading_post",
-            () -> TradingPostMenu::new);
+            TradingPostMenu::new);
 
     static final TagFactory TAGS = TagFactory.make(TradingPost.MOD_ID);
     public static final TagKey<EntityType<?>> EXCLUDE_FROM_TRADING_POST_ENTITY_TYPE_TAG = TAGS.registerEntityTypeTag(
