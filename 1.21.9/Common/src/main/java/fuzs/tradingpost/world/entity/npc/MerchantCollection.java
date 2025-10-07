@@ -193,6 +193,7 @@ public class MerchantCollection implements Merchant {
                 return ((VillagerDataHolder) merchant).getVillagerData().level();
             }
         }
+
         return 0;
     }
 
@@ -206,6 +207,7 @@ public class MerchantCollection implements Merchant {
                 return ((Entity) merchant).getDisplayName();
             }
         }
+
         return null;
     }
 
@@ -219,11 +221,13 @@ public class MerchantCollection implements Merchant {
                 }
             }
         }
+
         if (!toRemove.isEmpty()) {
             toRemove.forEach((IntConsumer) this::removeMerchant);
             MessageSender.broadcast(PlayerSet.ofPlayer(serverPlayer),
                     new ClientboundRemoveMerchantsMessage(containerId, toRemove));
         }
+
         return !this.idToMerchant.isEmpty();
     }
 
@@ -272,6 +276,7 @@ public class MerchantCollection implements Merchant {
                     merchant.canRestock());
             MessageSender.broadcast(PlayerSet.ofPlayer(serverPlayer), message);
         }
+
         MessageSender.broadcast(PlayerSet.ofPlayer(serverPlayer),
                 new ClientboundBuildOffersMessage(containerId, this.getIdToOfferCountMap()));
     }
@@ -300,9 +305,11 @@ public class MerchantCollection implements Merchant {
                     offer = fakeOffer();
                     this.disabledOffers.add(offer);
                 }
+
                 allOffers.add(offer);
             }
         }
+
         this.allOffers = allOffers;
         this.buildOfferToMerchantMap();
     }
@@ -312,6 +319,7 @@ public class MerchantCollection implements Merchant {
         for (Merchant merchant : this.idToMerchant.values()) {
             merchant.getOffers().forEach(offer -> offerToMerchant.put(offer, merchant));
         }
+
         this.offerToMerchant = offerToMerchant;
     }
 

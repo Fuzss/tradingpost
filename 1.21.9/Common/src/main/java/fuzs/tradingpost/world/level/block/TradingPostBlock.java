@@ -120,7 +120,7 @@ public class TradingPostBlock extends BaseEntityBlock implements SimpleWaterlogg
 
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
-        if (level.isClientSide) {
+        if (level.isClientSide()) {
             return InteractionResult.SUCCESS;
         } else {
             Vec3 atCenter = Vec3.atCenterOf(pos);
@@ -166,8 +166,8 @@ public class TradingPostBlock extends BaseEntityBlock implements SimpleWaterlogg
             return false;
         }
 
-        if (!entity.isAlive() || !(entity instanceof Merchant merchant) || merchant.getTradingPlayer() != null ||
-                merchant.getOffers().isEmpty()) {
+        if (!entity.isAlive() || !(entity instanceof Merchant merchant) || merchant.getTradingPlayer() != null
+                || merchant.getOffers().isEmpty()) {
             return false;
         }
 

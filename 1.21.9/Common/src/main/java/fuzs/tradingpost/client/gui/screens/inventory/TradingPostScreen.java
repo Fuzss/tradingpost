@@ -17,6 +17,9 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.MerchantScreen;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.searchtree.SearchTree;
 import net.minecraft.network.chat.Component;
@@ -64,9 +67,7 @@ public class TradingPostScreen extends MerchantScreen {
                 .toArray(Button[]::new);
         Objects.checkIndex(6, this.tradeOfferButtons.length);
         for (Button tradeOfferButton : this.tradeOfferButtons) {
-
-            ((ButtonAccessor) tradeOfferButton).tradingpost$setOnPress(button -> {
-
+            ((ButtonAccessor) tradeOfferButton).tradingpost$setOnPress((Button button) -> {
                 MerchantScreenAccessor accessor = (MerchantScreenAccessor) this;
                 int shopItem = ((TradeOfferButtonAccessor) button).tradingpost$getIndex()
                         + accessor.tradingpost$getScrollOff();
@@ -106,15 +107,7 @@ public class TradingPostScreen extends MerchantScreen {
 
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        Component title = this.getMenu().getTraders().getDisplayName();
-        if (title != null) {
-            int traderLevel = this.menu.getTraderLevel();
-            if (traderLevel > 0 && traderLevel <= 5 && this.menu.showProgressBar()) {
-                title = title.copy().append(" - ").append(Component.translatable("merchant.level." + traderLevel));
-            }
-        } else {
-            title = this.title;
-        }
+        Component title = this.getDisplayTitle();
         guiGraphics.drawString(this.font,
                 title,
                 (49 + this.imageWidth / 2 - this.font.width(title) / 2),
@@ -127,6 +120,20 @@ public class TradingPostScreen extends MerchantScreen {
                 this.inventoryLabelY,
                 0XFF404040,
                 false);
+    }
+
+    private Component getDisplayTitle() {
+        Component title = this.getMenu().getTraders().getDisplayName();
+        if (title != null) {
+            int traderLevel = this.menu.getTraderLevel();
+            if (traderLevel > 0 && traderLevel <= 5 && this.menu.showProgressBar()) {
+                return title.copy().append(" - ").append(Component.translatable("merchant.level." + traderLevel));
+            } else {
+                return title;
+            }
+        } else {
+            return this.title;
+        }
     }
 
     @Override
@@ -284,14 +291,10 @@ public class TradingPostScreen extends MerchantScreen {
     }
 
     private void setButtonsActive(MerchantOffers merchantoffers) {
-
         if (!merchantoffers.isEmpty()) {
-
-            for (int i = 0, merchantoffersSize = merchantoffers.size(); i < merchantoffersSize; i++) {
-
+            for (int i = 0; i < merchantoffers.size(); i++) {
                 int scrollOff = ((MerchantScreenAccessor) this).tradingpost$getScrollOff();
                 if (merchantoffers.size() <= 7 || (i >= scrollOff && i < 7 + scrollOff)) {
-
                     MerchantOffer offer = merchantoffers.get(i);
                     this.tradeOfferButtons[i - scrollOff].active = this.getMenu().getTraders().checkOffer(offer);
                 }
@@ -328,59 +331,55 @@ public class TradingPostScreen extends MerchantScreen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int mouseKey) {
-        if (this.searchBox.mouseClicked(mouseX, mouseY, mouseKey)) {
+    public boolean mouseClicked(MouseButtonEvent mouseButtonEvent, boolean doubleClick) {
+        if (this.searchBox.mouseClicked(mouseButtonEvent, doubleClick)) {
             this.searchBox.setFocused(true);
             return true;
+        } else {
+            return super.mouseClicked(mouseButtonEvent, doubleClick);
         }
-        return super.mouseClicked(mouseX, mouseY, mouseKey);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifierKeys) {
+    public boolean keyPressed(KeyEvent keyEvent) {
         this.ignoreTextInput = false;
         String lastSearch = this.searchBox.getValue().trim();
-        if (this.searchBox.keyPressed(keyCode, scanCode, modifierKeys)) {
-
+        if (this.searchBox.keyPressed(keyEvent)) {
             if (!Objects.equals(this.searchBox.getValue().trim(), lastSearch)) {
-
                 this.refreshSearchResults();
             }
 
             return true;
-        } else if (this.searchBox.isFocused() && this.searchBox.isVisible() && keyCode != 256) {
+        } else if (this.searchBox.isFocused() && this.searchBox.isVisible() && !keyEvent.isEscape()) {
             return true;
-        } else if (this.minecraft.options.keyChat.matches(keyCode, scanCode) && !this.searchBox.isFocused()) {
+        } else if (this.minecraft.options.keyChat.matches(keyEvent) && !this.searchBox.isFocused()) {
             this.ignoreTextInput = true;
             this.searchBox.setFocused(true);
             return true;
         }
 
-        return super.keyPressed(keyCode, scanCode, modifierKeys);
+        return super.keyPressed(keyEvent);
     }
 
     @Override
-    public boolean charTyped(char typedChar, int modifierKeys) {
-
+    public boolean charTyped(CharacterEvent characterEvent) {
         String lastSearch = this.searchBox.getValue().trim();
-        if (!this.ignoreTextInput && this.searchBox.charTyped(typedChar, modifierKeys)) {
-
+        if (!this.ignoreTextInput && this.searchBox.charTyped(characterEvent)) {
             if (!Objects.equals(this.searchBox.getValue().trim(), lastSearch)) {
-
                 this.refreshSearchResults();
             }
 
             return true;
         }
 
-        return super.charTyped(typedChar, modifierKeys);
+        return super.charTyped(characterEvent);
     }
 
     public void refreshSearchResults() {
-
         if (!(this.getMenu().getOffers() instanceof TradingPostOffers offers)) {
             return;
         }
+
         String query = this.searchBox.getValue().trim();
         if (query.isEmpty()) {
             offers.clearFilter();
@@ -388,6 +387,7 @@ public class TradingPostScreen extends MerchantScreen {
             SearchTree<MerchantOffer> searchTree = SearchRegistryHelper.getSearchTree(TradingPostClient.MERCHANT_OFFERS_SEARCH_TREE);
             offers.setFilter(searchTree.search(query.toLowerCase(Locale.ROOT)));
         }
+
         ((MerchantScreenAccessor) this).tradingpost$setScrollOff(0);
         ((MerchantScreenAccessor) this).tradingpost$setShopItem(0);
         this.getMenu().setSelectionHint(-1);

@@ -19,13 +19,13 @@ public class TradingPostBlockEntity extends BlockEntity implements Nameable, Tic
     public static final Component CONTAINER_COMPONENT = Component.translatable("container.trading_post");
     public static final String TAG_CUSTOM_NAME = "CustomName";
 
-    private final TradingPostAnimationController animationController;
+    private final ItemStationAnimationController animationController;
     @Nullable
     private Component name;
 
     public TradingPostBlockEntity(BlockPos blockPos, BlockState blockState) {
         super(ModRegistry.TRADING_POST_BLOCK_ENTITY_TYPE.value(), blockPos, blockState);
-        this.animationController = new TradingPostAnimationController(blockPos);
+        this.animationController = new ItemStationAnimationController(blockPos);
     }
 
     @Override
@@ -45,7 +45,7 @@ public class TradingPostBlockEntity extends BlockEntity implements Nameable, Tic
         this.animationController.tick(this.getLevel());
     }
 
-    public TradingPostAnimationController getAnimationController() {
+    public ItemStationAnimationController getAnimationController() {
         return this.animationController;
     }
 
