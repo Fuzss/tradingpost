@@ -7,14 +7,12 @@ import fuzs.tradingpost.TradingPost;
 import fuzs.tradingpost.client.TradingPostClient;
 import fuzs.tradingpost.mixin.client.accessor.ButtonAccessor;
 import fuzs.tradingpost.mixin.client.accessor.MerchantScreenAccessor;
-import fuzs.tradingpost.mixin.client.accessor.TradeOfferButtonAccessor;
 import fuzs.tradingpost.network.client.C2SClearSlotsMessage;
 import fuzs.tradingpost.world.inventory.TradingPostMenu;
 import fuzs.tradingpost.world.item.trading.TradingPostOffers;
 import fuzs.tradingpost.world.level.block.entity.TradingPostBlockEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.MerchantScreen;
 import net.minecraft.client.renderer.GameRenderer;
@@ -41,7 +39,6 @@ public class TradingPostScreen extends MerchantScreen {
     public static final Component DEPRECATED_TRADE_COMPONENT = Component.translatable("merchant.deprecated");
     public static final Component MERCHANT_UNAVAILABLE_COMPONENT = Component.translatable("trading_post.trader_gone");
 
-    private Button[] tradeOfferButtons = new Button[7];
     private EditBox searchBox;
     private boolean ignoreTextInput;
 
@@ -52,16 +49,13 @@ public class TradingPostScreen extends MerchantScreen {
     @Override
     protected void init() {
         super.init();
-        this.tradeOfferButtons = this.renderables.stream().filter(Button.class::isInstance).limit(7).map(Button.class::cast).toArray(Button[]::new);
-        Objects.checkIndex(6, this.tradeOfferButtons.length);
-        for (Button tradeOfferButton : this.tradeOfferButtons) {
+        for (MerchantScreen.TradeOfferButton tradeOfferButton : this.tradeOfferButtons) {
 
             ((ButtonAccessor) tradeOfferButton).tradingpost$setOnPress(button -> {
 
-                MerchantScreenAccessor accessor = (MerchantScreenAccessor) this;
-                int shopItem = ((TradeOfferButtonAccessor) button).tradingpost$getIndex() + accessor.tradingpost$getScrollOff();
+                int shopItem = tradeOfferButton.getIndex() + ((MerchantScreenAccessor) this).tradingpost$getScrollOff();
                 MerchantOffers offers = this.getMenu().getOffers();
-                accessor.tradingpost$setShopItem(shopItem);
+                ((MerchantScreenAccessor) this).tradingpost$setShopItem(shopItem);
                 this.getMenu().setSelectionHint(shopItem);
                 this.getMenu().getTraders().setActiveOffer(offers.get(shopItem));
                 this.getMenu().tryMoveItems(shopItem);
@@ -207,16 +201,15 @@ public class TradingPostScreen extends MerchantScreen {
         }
 
         // move this out of if block above since search may update this
-        Button[] offerButtons = this.tradeOfferButtons;
-        for (int i = 0, offerButtonsLength = offerButtons.length; i < offerButtonsLength; i++) {
+        for (int i = 0, offerButtonsLength = this.tradeOfferButtons.length; i < offerButtonsLength; i++) {
 
-            Button button = offerButtons[i];
-            if (button.active && button.isHoveredOrFocused()) {
+            MerchantScreen.TradeOfferButton tradeOfferButton = this.tradeOfferButtons[i];
+            if (tradeOfferButton.active && tradeOfferButton.isHoveredOrFocused()) {
 
-                ((TradeOfferButtonAccessor) button).tradingpost$callRenderToolTip(guiGraphics, mouseX, mouseY);
+                tradeOfferButton.renderToolTip(guiGraphics, mouseX, mouseY);
             }
 
-            button.visible = i < this.getMenu().getOffers().size();
+            tradeOfferButton.visible = i < this.getMenu().getOffers().size();
         }
 
         this.renderTooltip(guiGraphics, mouseX, mouseY);

@@ -9,8 +9,7 @@
   ],
   "client": [
     "client.accessor.ButtonAccessor",
-    "client.accessor.MerchantScreenAccessor",
-    "client.accessor.TradeOfferButtonAccessor"
+    "client.accessor.MerchantScreenAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
