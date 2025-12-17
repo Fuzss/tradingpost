@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "compatibilityLevel": "JAVA_17",
+  "package": "${modGroup}.mixin",
+  "mixins": [
+    "accessor.MerchantMenuAccessor",
+    "accessor.VillagerAccessor"
+  ],
+  "client": [
+    "client.accessor.ButtonAccessor",
+    "client.accessor.MerchantScreenAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
