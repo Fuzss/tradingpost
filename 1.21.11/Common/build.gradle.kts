@@ -8,7 +8,6 @@ dependencies {
 
 multiloader {
     mixins {
-        accessor("MerchantMenuAccessor", "VillagerAccessor")
-        clientAccessor("ButtonAccessor", "MerchantScreenAccessor")
+        clientAccessor("MerchantScreenAccessor")
     }
 }

@@ -38,5 +38,4 @@ public class LocalMerchant extends ClientSideMerchant {
     public boolean showProgressBar() {
         return this.showProgressBar;
     }
-
 }

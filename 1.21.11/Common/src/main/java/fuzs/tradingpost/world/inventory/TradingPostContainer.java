@@ -1,6 +1,6 @@
 package fuzs.tradingpost.world.inventory;
 
-import fuzs.tradingpost.world.entity.npc.MerchantCollection;
+import fuzs.tradingpost.world.item.trading.MerchantCollection;
 import net.minecraft.world.inventory.MerchantContainer;
 
 public class TradingPostContainer extends MerchantContainer {

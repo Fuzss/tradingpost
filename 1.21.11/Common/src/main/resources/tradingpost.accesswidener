@@ -1,3 +1,11 @@
 accessWidener   v2  named
 accessible  class   net/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton
 accessible  field   net/minecraft/client/gui/screens/inventory/MerchantScreen   tradeOfferButtons   [Lnet/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton;
+extendable  method  net/minecraft/world/inventory/MerchantMenu  playTradeSound  ()V
+accessible  method  net/minecraft/world/entity/npc/villager/Villager    updateSpecialPrices (Lnet/minecraft/world/entity/player/Player;)V
+accessible  field   net/minecraft/client/gui/components/Button  onPress Lnet/minecraft/client/gui/components/Button$OnPress;
+mutable field   net/minecraft/client/gui/components/Button  onPress Lnet/minecraft/client/gui/components/Button$OnPress;
+accessible  field   net/minecraft/world/inventory/MerchantMenu  trader  Lnet/minecraft/world/item/trading/Merchant;
+mutable field   net/minecraft/world/inventory/MerchantMenu  trader  Lnet/minecraft/world/item/trading/Merchant;
+accessible  field   net/minecraft/world/inventory/MerchantMenu  tradeContainer  Lnet/minecraft/world/inventory/MerchantContainer;
+mutable field   net/minecraft/world/inventory/MerchantMenu  tradeContainer  Lnet/minecraft/world/inventory/MerchantContainer;

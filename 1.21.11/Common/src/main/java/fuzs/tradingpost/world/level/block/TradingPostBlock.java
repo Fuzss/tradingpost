@@ -5,8 +5,7 @@ import fuzs.puzzleslib.api.block.v1.entity.TickingEntityBlock;
 import fuzs.tradingpost.TradingPost;
 import fuzs.tradingpost.config.ServerConfig;
 import fuzs.tradingpost.init.ModRegistry;
-import fuzs.tradingpost.mixin.accessor.VillagerAccessor;
-import fuzs.tradingpost.world.entity.npc.MerchantCollection;
+import fuzs.tradingpost.world.item.trading.MerchantCollection;
 import fuzs.tradingpost.world.inventory.TradingPostMenu;
 import fuzs.tradingpost.world.level.block.entity.TradingPostBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -18,7 +17,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
@@ -134,11 +133,13 @@ public class TradingPostBlock extends BaseEntityBlock implements SimpleWaterlogg
                 ContainerLevelAccess access = ContainerLevelAccess.create(level, pos);
                 MerchantCollection merchants = new MerchantCollection(access);
                 for (Entity merchant : traders) {
-                    if (merchant instanceof Villager) {
-                        ((VillagerAccessor) merchant).tradingpost$callUpdateSpecialPrices(player);
+                    if (merchant instanceof Villager villager) {
+                        villager.updateSpecialPrices(player);
                     }
+
                     merchants.addMerchant(merchant.getId(), (Merchant) merchant);
                 }
+
                 merchants.setTradingPlayer(player);
                 merchants.buildOffers(merchants.getIdToOfferCountMap());
                 Component title;
@@ -147,6 +148,7 @@ public class TradingPostBlock extends BaseEntityBlock implements SimpleWaterlogg
                 } else {
                     title = TradingPostBlockEntity.CONTAINER_COMPONENT;
                 }
+
                 OptionalInt result = player.openMenu(new SimpleMenuProvider((int containerId, Inventory inventory, Player containerPlayer) -> {
                     return new TradingPostMenu(containerId, inventory, merchants, access);
                 }, title));

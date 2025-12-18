@@ -1,4 +1,4 @@
-package fuzs.tradingpost.world.entity.npc;
+package fuzs.tradingpost.world.item.trading;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -9,7 +9,7 @@ import fuzs.tradingpost.config.ServerConfig;
 import fuzs.tradingpost.network.ClientboundBuildOffersMessage;
 import fuzs.tradingpost.network.ClientboundMerchantDataMessage;
 import fuzs.tradingpost.network.ClientboundRemoveMerchantsMessage;
-import fuzs.tradingpost.world.item.trading.TradingPostOffers;
+import fuzs.tradingpost.world.entity.npc.LocalMerchant;
 import fuzs.tradingpost.world.level.block.entity.TradingPostBlockEntity;
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -20,7 +20,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ExperienceOrb;
-import net.minecraft.world.entity.npc.VillagerDataHolder;
+import net.minecraft.world.entity.npc.villager.VillagerDataHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
@@ -31,7 +31,7 @@ import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
@@ -215,8 +215,8 @@ public class MerchantCollection implements Merchant {
         IntSet toRemove = new IntOpenHashSet();
         for (Map.Entry<Integer, Merchant> entry : this.idToMerchant.int2ObjectEntrySet()) {
             if (entry.getValue() instanceof Entity) {
-                if (entry.getValue().getTradingPlayer() != serverPlayer ||
-                        testRange && !this.traderInRange((Entity) entry.getValue(), pos)) {
+                if (entry.getValue().getTradingPlayer() != serverPlayer
+                        || testRange && !this.traderInRange((Entity) entry.getValue(), pos)) {
                     toRemove.add(entry.getKey().intValue());
                 }
             }
@@ -236,9 +236,9 @@ public class MerchantCollection implements Merchant {
     }
 
     private boolean traderInRange(Entity entity, double posX, double posY, double posZ) {
-        return Math.abs(entity.getX() - posX) <= TradingPost.CONFIG.get(ServerConfig.class).horizontalRange &&
-                Math.abs(entity.getY() - posY) <= TradingPost.CONFIG.get(ServerConfig.class).verticalRange &&
-                Math.abs(entity.getZ() - posZ) <= TradingPost.CONFIG.get(ServerConfig.class).horizontalRange;
+        return Math.abs(entity.getX() - posX) <= TradingPost.CONFIG.get(ServerConfig.class).horizontalRange
+                && Math.abs(entity.getY() - posY) <= TradingPost.CONFIG.get(ServerConfig.class).verticalRange
+                && Math.abs(entity.getZ() - posZ) <= TradingPost.CONFIG.get(ServerConfig.class).horizontalRange;
     }
 
     public void removeMerchant(int merchantId) {

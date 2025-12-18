@@ -3,9 +3,8 @@ package fuzs.tradingpost.world.inventory;
 import fuzs.tradingpost.TradingPost;
 import fuzs.tradingpost.config.ServerConfig;
 import fuzs.tradingpost.init.ModRegistry;
-import fuzs.tradingpost.mixin.accessor.MerchantMenuAccessor;
 import fuzs.tradingpost.world.entity.npc.LocalMerchant;
-import fuzs.tradingpost.world.entity.npc.MerchantCollection;
+import fuzs.tradingpost.world.item.trading.MerchantCollection;
 import fuzs.tradingpost.world.level.block.TradingPostBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -25,22 +24,19 @@ import java.util.Optional;
 public class TradingPostMenu extends MerchantMenu {
     private final ContainerLevelAccess access;
     private final MerchantCollection traders;
-    private final MerchantContainer tradeContainer;
 
     private int ticks;
-    private boolean lockOffers;
+    private boolean offersLocked;
 
     public TradingPostMenu(int containerId, Inventory inventory) {
         this(containerId, inventory, new MerchantCollection(), ContainerLevelAccess.NULL);
     }
 
-    public TradingPostMenu(int containerId, Inventory inventory, MerchantCollection merchantCollection, ContainerLevelAccess worldPosCallable) {
+    public TradingPostMenu(int containerId, Inventory inventory, MerchantCollection merchantCollection, ContainerLevelAccess containerLevelAccess) {
         super(containerId, inventory, merchantCollection);
-        this.access = worldPosCallable;
-        this.traders = merchantCollection;
-        ((MerchantMenuAccessor) this).tradingpost$setTrader(this.traders);
+        this.access = containerLevelAccess;
+        this.trader = this.traders = merchantCollection;
         this.tradeContainer = new TradingPostContainer(this.traders);
-        ((MerchantMenuAccessor) this).tradingpost$setTradeContainer(this.tradeContainer);
         this.replaceSlot(0, new Slot(this.tradeContainer, 0, 136, 37));
         this.replaceSlot(1, new Slot(this.tradeContainer, 1, 162, 37));
         this.replaceSlot(2, new MerchantResultSlot(inventory.player, this.traders, this.tradeContainer, 2, 220, 37));
@@ -58,6 +54,7 @@ public class TradingPostMenu extends MerchantMenu {
 
     @Override
     public boolean stillValid(Player player) {
+        // TODO this should be handled by the block entity, and synced to the menu via a data slot
         // this also updates merchants, so run independent of config option
         // don't want this to go off on every tick
         Optional<Boolean> anyTrader = this.access.evaluate((Level level, BlockPos pos) -> {
@@ -65,7 +62,7 @@ public class TradingPostMenu extends MerchantMenu {
             return this.traders.updateAvailableMerchants((ServerPlayer) player, this.containerId, pos, testRange);
         });
         if (this.ticks >= 20) this.ticks = 0;
-        if (TradingPost.CONFIG.get(ServerConfig.class).closeScreen && anyTrader.isPresent() && !anyTrader.get()) {
+        if (TradingPost.CONFIG.get(ServerConfig.class).closeEmptyScreen && anyTrader.isPresent() && !anyTrader.get()) {
             player.displayClientMessage(TradingPostBlock.MISSING_MERCHANT_COMPONENT, false);
             return false;
         }
@@ -73,48 +70,7 @@ public class TradingPostMenu extends MerchantMenu {
     }
 
     @Override
-    public ItemStack quickMoveStack(Player player, int slotIndex) {
-        ItemStack itemstack = ItemStack.EMPTY;
-        Slot slot = this.slots.get(slotIndex);
-        if (slot != null && slot.hasItem()) {
-
-            ItemStack itemstack1 = slot.getItem();
-            itemstack = itemstack1.copy();
-            if (slotIndex == 2) {
-
-                if (!this.moveItemStackTo(itemstack1, 3, 39, true)) {
-
-                    return ItemStack.EMPTY;
-                }
-
-                slot.onQuickCraft(itemstack1, itemstack);
-                // only replace this, vanilla will throw ClassCastException due to MerchantCollection not being an entity
-                this.playTradeSound();
-            } else {
-
-                return super.quickMoveStack(player, slotIndex);
-            }
-
-            if (itemstack1.isEmpty()) {
-
-                slot.set(ItemStack.EMPTY);
-            } else {
-
-                slot.setChanged();
-            }
-
-            if (itemstack1.getCount() == itemstack.getCount()) {
-
-                return ItemStack.EMPTY;
-            }
-
-            slot.onTake(player, itemstack1);
-        }
-
-        return itemstack;
-    }
-
-    private void playTradeSound() {
+    protected void playTradeSound() {
         if (!this.traders.isClientSide()) {
             Merchant merchant = this.traders.getCurrentMerchant();
             if (merchant instanceof Entity entity) {
@@ -131,6 +87,9 @@ public class TradingPostMenu extends MerchantMenu {
         }
     }
 
+    /**
+     * @see MerchantMenu#tryMoveItems(int)
+     */
     public void clearPaymentSlots() {
         ItemStack itemstack = this.tradeContainer.getItem(0);
         if (!itemstack.isEmpty()) {
@@ -153,15 +112,15 @@ public class TradingPostMenu extends MerchantMenu {
 
     @Override
     public MerchantOffers getOffers() {
-        return this.lockOffers ? new MerchantOffers() : super.getOffers();
+        return this.offersLocked ? new MerchantOffers() : super.getOffers();
     }
 
     public MerchantCollection getTraders() {
         return this.traders;
     }
 
-    public void lockOffers(boolean lock) {
-        this.lockOffers = lock;
+    public void setOffersLocked(boolean offersLocked) {
+        this.offersLocked = offersLocked;
     }
 
     public void addMerchant(Player player, int merchantId, Component merchantTitle, MerchantOffers offers, int villagerLevel, int villagerXp, boolean showProgress, boolean canRestock) {

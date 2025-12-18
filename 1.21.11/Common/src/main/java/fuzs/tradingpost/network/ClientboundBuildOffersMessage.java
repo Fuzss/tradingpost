@@ -1,6 +1,6 @@
 package fuzs.tradingpost.network;
 
-import fuzs.puzzleslib.api.client.searchtree.v1.SearchRegistryHelper;
+import fuzs.puzzleslib.api.client.util.v1.SearchRegistryHelper;
 import fuzs.puzzleslib.api.network.v4.message.MessageListener;
 import fuzs.puzzleslib.api.network.v4.message.WritableMessage;
 import fuzs.puzzleslib.api.network.v4.message.play.ClientboundPlayMessage;
@@ -48,8 +48,8 @@ public final class ClientboundBuildOffersMessage implements ClientboundPlayMessa
         return new MessageListener<>() {
             @Override
             public void accept(Context context) {
-                if (context.player().containerMenu instanceof TradingPostMenu menu &&
-                        ClientboundBuildOffersMessage.this.containerId == menu.containerId) {
+                if (context.player().containerMenu instanceof TradingPostMenu menu
+                        && ClientboundBuildOffersMessage.this.containerId == menu.containerId) {
                     if (context.client().screen instanceof TradingPostScreen screen) {
                         menu.getTraders().buildOffers(ClientboundBuildOffersMessage.this.idToOfferCount);
                         SearchRegistryHelper.populateSearchTree(TradingPostClient.MERCHANT_OFFERS_SEARCH_TREE,

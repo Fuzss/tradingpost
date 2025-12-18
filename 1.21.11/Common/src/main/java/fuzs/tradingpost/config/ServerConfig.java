@@ -14,6 +14,6 @@ public class ServerConfig implements ConfigCore {
     public boolean enforceRange = false;
     @Config(description = "Teleport xp from trading from villagers on top of the trading post.")
     public boolean teleportXp = true;
-    @Config(name = "close_empty_screen", description = "Close trading post interface when all traders have become unavailable.")
-    public boolean closeScreen = true;
+    @Config(description = "Close trading post interface when all traders have become unavailable.")
+    public boolean closeEmptyScreen = true;
 }

@@ -1,17 +1,14 @@
 package fuzs.tradingpost.client.gui.screens.inventory;
 
-import fuzs.puzzleslib.api.client.searchtree.v1.SearchRegistryHelper;
-import fuzs.puzzleslib.api.core.v1.utility.ResourceLocationHelper;
+import fuzs.puzzleslib.api.client.util.v1.SearchRegistryHelper;
 import fuzs.puzzleslib.api.network.v4.MessageSender;
 import fuzs.tradingpost.TradingPost;
 import fuzs.tradingpost.client.TradingPostClient;
-import fuzs.tradingpost.mixin.client.accessor.ButtonAccessor;
 import fuzs.tradingpost.mixin.client.accessor.MerchantScreenAccessor;
 import fuzs.tradingpost.network.client.ServerboundClearSlotsMessage;
 import fuzs.tradingpost.world.inventory.TradingPostMenu;
 import fuzs.tradingpost.world.item.trading.TradingPostOffers;
 import fuzs.tradingpost.world.level.block.entity.TradingPostBlockEntity;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -23,7 +20,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.searchtree.SearchTree;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundSelectTradePacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.inventory.Slot;
@@ -35,13 +32,12 @@ import java.util.Locale;
 import java.util.Objects;
 
 public class TradingPostScreen extends MerchantScreen {
-    public static final ResourceLocation MAGNIFYING_GLASS_LOCATION = TradingPost.id(
-            "container/villager/magnifying_glass");
-    private static final ResourceLocation OUT_OF_STOCK_SPRITE = ResourceLocationHelper.withDefaultNamespace(
+    public static final Identifier MAGNIFYING_GLASS_LOCATION = TradingPost.id("container/villager/magnifying_glass");
+    private static final Identifier OUT_OF_STOCK_SPRITE = Identifier.withDefaultNamespace(
             "container/villager/out_of_stock");
-    private static final ResourceLocation DISCOUNT_STRIKETHRUOGH_SPRITE = ResourceLocationHelper.withDefaultNamespace(
+    private static final Identifier DISCOUNT_STRIKETHRUOGH_SPRITE = Identifier.withDefaultNamespace(
             "container/villager/discount_strikethrough");
-    private static final ResourceLocation CREATIVE_INVENTORY_LOCATION = ResourceLocationHelper.withDefaultNamespace(
+    private static final Identifier CREATIVE_INVENTORY_LOCATION = Identifier.withDefaultNamespace(
             "textures/gui/container/creative_inventory/tab_item_search.png");
     public static final Component DEPRECATED_TRADE_COMPONENT = Component.translatable("merchant.deprecated");
     public static final Component MERCHANT_UNAVAILABLE_COMPONENT = Component.translatable("trading_post.trader_gone");
@@ -57,7 +53,7 @@ public class TradingPostScreen extends MerchantScreen {
     protected void init() {
         super.init();
         for (MerchantScreen.TradeOfferButton tradeOfferButton : this.tradeOfferButtons) {
-            ((ButtonAccessor) tradeOfferButton).tradingpost$setOnPress((Button button) -> {
+            tradeOfferButton.onPress = (Button button) -> {
                 int shopItem = tradeOfferButton.getIndex() + ((MerchantScreenAccessor) this).tradingpost$getScrollOff();
                 MerchantOffers offers = this.getMenu().getOffers();
                 ((MerchantScreenAccessor) this).tradingpost$setShopItem(shopItem);
@@ -68,7 +64,7 @@ public class TradingPostScreen extends MerchantScreen {
                 this.minecraft.getConnection()
                         .send(new ServerboundSelectTradePacket(offers instanceof TradingPostOffers ?
                                 ((TradingPostOffers) offers).getOrigShopItem(shopItem) : shopItem));
-            });
+            };
         }
 
         this.searchBox = new EditBox(this.font,
@@ -84,10 +80,10 @@ public class TradingPostScreen extends MerchantScreen {
     }
 
     @Override
-    public void resize(Minecraft minecraft, int width, int height) {
-        String lastSearch = this.searchBox.getValue();
-        super.resize(minecraft, width, height);
-        this.searchBox.setValue(lastSearch);
+    public void resize(int width, int height) {
+        String inputValue = this.searchBox.getValue();
+        super.resize(width, height);
+        this.searchBox.setValue(inputValue);
         if (!this.searchBox.getValue().isEmpty()) {
             this.refreshSearchResults();
         }
@@ -161,6 +157,8 @@ public class TradingPostScreen extends MerchantScreen {
             ((MerchantScreenAccessor) this).tradingpost$callRenderScroller(guiGraphics,
                     this.leftPos,
                     this.topPos,
+                    mouseX,
+                    mouseY,
                     merchantoffers);
 
             for (int i = 0, merchantoffersSize = merchantoffers.size(); i < merchantoffersSize; i++) {
@@ -290,7 +288,7 @@ public class TradingPostScreen extends MerchantScreen {
     }
 
     private void lock(boolean lockOffers, int newScrollOff, Slot newHoveredSlot) {
-        this.getMenu().lockOffers(lockOffers);
+        this.getMenu().setOffersLocked(lockOffers);
         ((MerchantScreenAccessor) this).tradingpost$setScrollOff(newScrollOff);
         this.hoveredSlot = newHoveredSlot;
     }

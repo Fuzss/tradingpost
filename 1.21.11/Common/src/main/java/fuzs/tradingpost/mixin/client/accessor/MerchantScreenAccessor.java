@@ -10,7 +10,6 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(MerchantScreen.class)
 public interface MerchantScreenAccessor {
-
     @Accessor("shopItem")
     int tradingpost$getShopItem();
 
@@ -24,7 +23,7 @@ public interface MerchantScreenAccessor {
     void tradingpost$setScrollOff(int scrollOff);
 
     @Invoker("renderScroller")
-    void tradingpost$callRenderScroller(GuiGraphics guiGraphics, int width, int height, MerchantOffers offers);
+    void tradingpost$callRenderScroller(GuiGraphics guiGraphics, int width, int height, int mouseX, int mouseY, MerchantOffers offers);
 
     @Invoker("renderButtonArrows")
     void tradingpost$callRenderButtonArrows(GuiGraphics guiGraphics, MerchantOffer offer, int width, int height);
